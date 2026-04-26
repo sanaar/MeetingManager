@@ -226,6 +226,74 @@
 </head>
 <body class="flex h-screen overflow-hidden">
 
+  <!-- ===== AUTH SCREEN ===== -->
+  <div id="auth-screen" style="display:flex;position:fixed;inset:0;background:#0b0d18;z-index:100;overflow-y:auto;align-items:center;justify-content:center;flex-direction:column;">
+    <div style="width:100%;max-width:400px;padding:32px;">
+      <div class="flex items-center gap-2 mb-8 justify-center">
+        <div class="w-10 h-10 rounded-xl accent-bg flex items-center justify-center text-white text-lg">🤖</div>
+        <div>
+          <div class="text-white font-extrabold text-base leading-tight">MEETING MANAGER</div>
+          <div class="text-gray-500 text-xs">AI Meeting Assistant</div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div style="display:flex;background:#141728;border-radius:10px;padding:4px;margin-bottom:24px;">
+        <button id="tab-login" onclick="switchAuthTab('login')"
+          style="flex:1;padding:8px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;background:#7c3aed;color:white;">Sign In</button>
+        <button id="tab-register" onclick="switchAuthTab('register')"
+          style="flex:1;padding:8px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;background:transparent;color:#64748b;">Create Account</button>
+      </div>
+
+      <div id="auth-error" style="display:none;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#f87171;"></div>
+
+      <!-- Login Form -->
+      <div id="form-login">
+        <div style="margin-bottom:14px;">
+          <label style="display:block;font-size:13px;color:#94a3b8;margin-bottom:6px;">Email</label>
+          <input type="email" id="login-email" placeholder="you@example.com" style="background:#141728;border:1px solid #252b47;border-radius:8px;color:#e2e8f0;padding:10px 14px;width:100%;font-size:14px;outline:none;" onkeydown="if(event.key==='Enter')doLogin()"/>
+        </div>
+        <div style="margin-bottom:20px;">
+          <label style="display:block;font-size:13px;color:#94a3b8;margin-bottom:6px;">Password</label>
+          <input type="password" id="login-password" placeholder="••••••••" style="background:#141728;border:1px solid #252b47;border-radius:8px;color:#e2e8f0;padding:10px 14px;width:100%;font-size:14px;outline:none;" onkeydown="if(event.key==='Enter')doLogin()"/>
+        </div>
+        <button class="btn-primary w-full" id="login-btn" onclick="doLogin()">Sign In →</button>
+        <div style="text-align:center;margin-top:16px;">
+          <span style="font-size:12px;color:#475569;">No account? </span>
+          <span style="font-size:12px;color:#a78bfa;cursor:pointer;" onclick="switchAuthTab('register')">Create one free</span>
+        </div>
+      </div>
+
+      <!-- Register Form -->
+      <div id="form-register" style="display:none;">
+        <div style="margin-bottom:14px;">
+          <label style="display:block;font-size:13px;color:#94a3b8;margin-bottom:6px;">Name</label>
+          <input type="text" id="reg-name" placeholder="Jane Cooper" style="background:#141728;border:1px solid #252b47;border-radius:8px;color:#e2e8f0;padding:10px 14px;width:100%;font-size:14px;outline:none;"/>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label style="display:block;font-size:13px;color:#94a3b8;margin-bottom:6px;">Role <span style="color:#475569;">(optional)</span></label>
+          <input type="text" id="reg-role" placeholder="e.g. Product Manager, Engineer…" style="background:#141728;border:1px solid #252b47;border-radius:8px;color:#e2e8f0;padding:10px 14px;width:100%;font-size:14px;outline:none;"/>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label style="display:block;font-size:13px;color:#94a3b8;margin-bottom:6px;">Email</label>
+          <input type="email" id="reg-email" placeholder="you@example.com" style="background:#141728;border:1px solid #252b47;border-radius:8px;color:#e2e8f0;padding:10px 14px;width:100%;font-size:14px;outline:none;"/>
+        </div>
+        <div style="margin-bottom:20px;">
+          <label style="display:block;font-size:13px;color:#94a3b8;margin-bottom:6px;">Password</label>
+          <input type="password" id="reg-password" placeholder="Min 6 characters" style="background:#141728;border:1px solid #252b47;border-radius:8px;color:#e2e8f0;padding:10px 14px;width:100%;font-size:14px;outline:none;"/>
+        </div>
+        <button class="btn-primary w-full" id="reg-btn" onclick="doRegister()">Create Account →</button>
+        <div style="text-align:center;margin-top:16px;">
+          <span style="font-size:12px;color:#475569;">Already have an account? </span>
+          <span style="font-size:12px;color:#a78bfa;cursor:pointer;" onclick="switchAuthTab('login')">Sign in</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MAIN APP ===== -->
+  <div id="app" style="display:none;" class="flex h-screen overflow-hidden w-full">
+
   <!-- ===== SIDEBAR ===== -->
   <div class="sidebar w-56 flex-shrink-0 flex flex-col py-4 px-3">
     <!-- Logo -->
@@ -257,7 +325,7 @@
       <div class="nav-item" onclick="showScreen('dashboard')">
         <span style="font-size:15px;">📊</span> Insights
       </div>
-      <div class="nav-item" onclick="showScreen('dashboard')">
+      <div class="nav-item" id="nav-feedback" onclick="showScreen('feedback')">
         <span style="font-size:15px;">💬</span> Feedback
       </div>
       <div class="nav-item" onclick="showScreen('dashboard')">
@@ -274,11 +342,12 @@
 
     <!-- User -->
     <div class="flex items-center gap-2 px-2 pt-3 border-t border-gray-800">
-      <div class="avatar" style="background:#3b1f6e;color:white;">JC</div>
-      <div>
-        <div class="text-white text-xs font-semibold">Jane Cooper</div>
-        <div class="text-gray-500 text-xs">jane@hackathon.dev</div>
+      <div class="avatar" id="user-initials" style="background:#3b1f6e;color:white;">JC</div>
+      <div class="flex-1 min-w-0">
+        <div class="text-white text-xs font-semibold" id="user-name">Jane Cooper</div>
+        <div class="text-gray-500 text-xs truncate" id="user-email">jane@hackathon.dev</div>
       </div>
+      <button onclick="doLogout()" title="Sign out" style="background:none;border:none;color:#475569;cursor:pointer;font-size:14px;padding:2px 4px;" title="Log out">⏻</button>
     </div>
   </div>
 
@@ -305,29 +374,24 @@
         <div class="grid grid-cols-4 gap-4">
           <div class="stat-card">
             <div class="text-gray-400 text-xs mb-1">Upcoming Meetings</div>
-            <div class="text-gray-900 text-3xl font-bold">7</div>
-            <div class="text-green-600 text-xs mt-1">↑ 2 this week</div>
+            <div class="text-gray-900 text-3xl font-bold" id="dash-upcoming">—</div>
+            <div class="text-green-600 text-xs mt-1" id="dash-upcoming-sub"></div>
           </div>
           <div class="stat-card">
             <div class="text-gray-400 text-xs mb-1">Meeting Hours</div>
-            <div class="text-gray-900 text-3xl font-bold">24</div>
-            <div class="text-orange-500 text-xs mt-1">↓ 3h vs last week</div>
+            <div class="text-gray-900 text-3xl font-bold" id="dash-hours">—</div>
+            <div class="text-gray-400 text-xs mt-1">total this week</div>
           </div>
           <div class="stat-card">
             <div class="text-gray-400 text-xs mb-1">Team Members</div>
-            <div class="text-gray-900 text-3xl font-bold">12</div>
-            <div class="flex gap-1 mt-2">
-              <div class="avatar w-6 h-6 text-xs" style="background:#5b21b6;color:white;">JC</div>
-              <div class="avatar w-6 h-6 text-xs" style="background:#0e7490;color:white;">AT</div>
-              <div class="avatar w-6 h-6 text-xs" style="background:#92400e;color:white;">SM</div>
-              <div class="avatar w-6 h-6 text-xs" style="background:#e8eaf2;color:#94a3b8;">+9</div>
-            </div>
+            <div class="text-gray-900 text-3xl font-bold" id="dash-members">—</div>
+            <div class="flex gap-1 mt-2" id="dash-member-avatars"></div>
           </div>
           <div class="stat-card">
             <div class="text-gray-400 text-xs mb-1">Room Usage</div>
-            <div class="text-gray-900 text-3xl font-bold">68%</div>
+            <div class="text-gray-900 text-3xl font-bold" id="dash-room">—</div>
             <div class="progress-bar mt-2">
-              <div class="progress-fill" style="width:68%"></div>
+              <div class="progress-fill" id="dash-room-bar" style="width:0%"></div>
             </div>
           </div>
         </div>
@@ -341,82 +405,16 @@
               <span class="text-gray-400 text-xs cursor-pointer hover:text-violet-600">View all →</span>
             </div>
 
-            <div class="meeting-row">
-              <div class="w-9 h-9 rounded-lg flex items-center justify-center text-sm" style="background:#ede9ff;">🎨</div>
-              <div class="flex-1">
-                <div class="text-gray-800 text-sm font-medium">Google Design Sprint</div>
-                <div class="text-gray-400 text-xs">10:00 AM · Room A · 5 attendees</div>
-              </div>
-              <span class="badge badge-purple">Design</span>
-            </div>
-
-            <div class="meeting-row">
-              <div class="w-9 h-9 rounded-lg flex items-center justify-center text-sm" style="background:#eff6ff;">📋</div>
-              <div class="flex-1">
-                <div class="text-gray-800 text-sm font-medium">Team Strategy Review</div>
-                <div class="text-gray-400 text-xs">11:30 AM · Remote · 8 attendees</div>
-              </div>
-              <span class="badge badge-blue">Strategy</span>
-            </div>
-
-            <div class="meeting-row">
-              <div class="w-9 h-9 rounded-lg flex items-center justify-center text-sm" style="background:#dcfce7;">🚀</div>
-              <div class="flex-1">
-                <div class="text-gray-800 text-sm font-medium">Product Launch Planning</div>
-                <div class="text-gray-400 text-xs">2:00 PM · Room B · 6 attendees</div>
-              </div>
-              <span class="badge badge-green">Product</span>
-            </div>
-
-            <div class="meeting-row">
-              <div class="w-9 h-9 rounded-lg flex items-center justify-center text-sm" style="background:#fff7ed;">💡</div>
-              <div class="flex-1">
-                <div class="text-gray-800 text-sm font-medium">Quarterly OKR Alignment</div>
-                <div class="text-gray-400 text-xs">3:30 PM · Room C · 12 attendees</div>
-              </div>
-              <span class="badge badge-orange">Planning</span>
-            </div>
-
-            <div class="meeting-row">
-              <div class="w-9 h-9 rounded-lg flex items-center justify-center text-sm" style="background:#fdf2f8;">🤝</div>
-              <div class="flex-1">
-                <div class="text-gray-800 text-sm font-medium">Client Onboarding Call</div>
-                <div class="text-gray-400 text-xs">4:30 PM · Zoom · 4 attendees</div>
-              </div>
-              <span class="badge badge-purple">Client</span>
+            <div id="dash-meetings-list">
+              <div class="text-gray-400 text-xs py-4 text-center">Loading...</div>
             </div>
           </div>
 
           <!-- Today's Schedule -->
           <div class="lcard p-5">
             <div class="text-gray-800 font-semibold mb-4">Today's Schedule</div>
-            <div class="space-y-3">
-              <div class="lcard-sm p-3">
-                <div class="text-xs text-gray-400 mb-1">9:00 AM</div>
-                <div class="text-sm text-gray-800 font-medium">Morning Standup</div>
-                <div class="flex gap-1 mt-2">
-                  <div class="avatar w-5 h-5 text-xs" style="background:#5b21b6;color:white;">J</div>
-                  <div class="avatar w-5 h-5 text-xs" style="background:#0e7490;color:white;">A</div>
-                  <div class="avatar w-5 h-5 text-xs" style="background:#92400e;color:white;">S</div>
-                </div>
-              </div>
-              <div class="lcard-sm p-3 border-l-2 border-purple-500">
-                <div class="text-xs text-violet-600 font-semibold mb-1">10:00 AM · NOW</div>
-                <div class="text-sm text-gray-800 font-medium">Google Design Sprint</div>
-                <div class="flex gap-1 mt-2">
-                  <div class="avatar w-5 h-5 text-xs" style="background:#3b1f6e;color:white;">J</div>
-                  <div class="avatar w-5 h-5 text-xs" style="background:#1e3a5f;color:white;">T</div>
-                  <div class="avatar w-5 h-5 text-xs" style="background:#e8eaf2;color:#94a3b8;">+3</div>
-                </div>
-              </div>
-              <div class="lcard-sm p-3">
-                <div class="text-xs text-gray-400 mb-1">11:30 AM</div>
-                <div class="text-sm text-gray-800 font-medium">Team Strategy Review</div>
-              </div>
-              <div class="lcard-sm p-3">
-                <div class="text-xs text-gray-400 mb-1">2:00 PM</div>
-                <div class="text-sm text-gray-800 font-medium">Product Launch Planning</div>
-              </div>
+            <div class="space-y-3" id="dash-today-list">
+              <div class="text-gray-400 text-xs text-center py-2">Loading...</div>
             </div>
           </div>
         </div>
@@ -426,79 +424,17 @@
           <!-- Recent Activity -->
           <div class="lcard p-5">
             <div class="text-gray-800 font-semibold mb-4">Recent Activity</div>
-            <div class="space-y-3">
-              <div class="flex gap-3 items-start">
-                <div class="avatar w-8 h-8 text-xs" style="background:#3b1f6e;color:white;">JC</div>
-                <div>
-                  <div class="text-sm text-gray-600"><span class="text-gray-900 font-semibold">Jane Cooper</span> scheduled Design Sprint</div>
-                  <div class="text-gray-400 text-xs mt-0.5">2 hours ago</div>
-                </div>
-              </div>
-              <div class="flex gap-3 items-start">
-                <div class="avatar w-8 h-8 text-xs" style="background:#0e7490;color:white;">AT</div>
-                <div>
-                  <div class="text-sm text-gray-600"><span class="text-gray-900 font-semibold">Alex Turner</span> updated the agenda for Strategy Review</div>
-                  <div class="text-gray-400 text-xs mt-0.5">4 hours ago</div>
-                </div>
-              </div>
-              <div class="flex gap-3 items-start">
-                <div class="avatar w-8 h-8 text-xs" style="background:#92400e;color:white;">SM</div>
-                <div>
-                  <div class="text-sm text-gray-600"><span class="text-gray-900 font-semibold">Sarah Mills</span> cancelled Weekly Sync (replaced with email)</div>
-                  <div class="text-gray-400 text-xs mt-0.5">Yesterday</div>
-                </div>
-              </div>
-              <div class="flex gap-3 items-start">
-                <div class="avatar w-8 h-8 text-xs" style="background:#14532d;color:white;">MK</div>
-                <div>
-                  <div class="text-sm text-gray-600"><span class="text-gray-900 font-semibold">Mike Kim</span> used AI to shorten Q3 Review by 30 min</div>
-                  <div class="text-gray-400 text-xs mt-0.5">Yesterday</div>
-                </div>
-              </div>
+            <div class="space-y-3" id="dash-activity-list">
+              <div class="text-gray-400 text-xs text-center py-2">Loading...</div>
             </div>
           </div>
 
-          <!-- Team Availability -->
+          <!-- Team Members -->
           <div class="lcard p-5">
-            <div class="text-gray-800 font-semibold mb-4">Team Availability</div>
-            <div class="space-y-3">
-              <div class="flex items-center gap-3">
-                <div class="avatar w-8 h-8 text-xs" style="background:#3b1f6e;color:white;">JC</div>
-                <div class="flex-1">
-                  <div class="flex justify-between text-xs text-gray-500 mb-1"><span>Jane Cooper</span><span class="text-green-600 font-medium">Available</span></div>
-                  <div class="availability-bar"><div style="width:30%;background:#16a34a;height:100%;border-radius:4px;"></div></div>
-                </div>
-              </div>
-              <div class="flex items-center gap-3">
-                <div class="avatar w-8 h-8 text-xs" style="background:#0e7490;color:white;">AT</div>
-                <div class="flex-1">
-                  <div class="flex justify-between text-xs text-gray-500 mb-1"><span>Alex Turner</span><span class="text-orange-500 font-medium">In meeting</span></div>
-                  <div class="availability-bar"><div style="width:80%;background:#ea580c;height:100%;border-radius:4px;"></div></div>
-                </div>
-              </div>
-              <div class="flex items-center gap-3">
-                <div class="avatar w-8 h-8 text-xs" style="background:#92400e;color:white;">SM</div>
-                <div class="flex-1">
-                  <div class="flex justify-between text-xs text-gray-500 mb-1"><span>Sarah Mills</span><span class="text-green-600 font-medium">Available</span></div>
-                  <div class="availability-bar"><div style="width:45%;background:#16a34a;height:100%;border-radius:4px;"></div></div>
-                </div>
-              </div>
-              <div class="flex items-center gap-3">
-                <div class="avatar w-8 h-8 text-xs" style="background:#14532d;color:white;">MK</div>
-                <div class="flex-1">
-                  <div class="flex justify-between text-xs text-gray-500 mb-1"><span>Mike Kim</span><span class="text-blue-600 font-medium">Focus time</span></div>
-                  <div class="availability-bar"><div style="width:60%;background:#2563eb;height:100%;border-radius:4px;"></div></div>
-                </div>
-              </div>
-              <div class="flex items-center gap-3">
-                <div class="avatar w-8 h-8 text-xs" style="background:#1e1b4b;color:white;">PR</div>
-                <div class="flex-1">
-                  <div class="flex justify-between text-xs text-gray-500 mb-1"><span>Priya Rao</span><span class="text-green-600 font-medium">Available</span></div>
-                  <div class="availability-bar"><div style="width:20%;background:#16a34a;height:100%;border-radius:4px;"></div></div>
-                </div>
-              </div>
+            <div class="text-gray-800 font-semibold mb-4">Team Members</div>
+            <div class="space-y-3" id="dash-team-list">
+              <div class="text-gray-400 text-xs text-center py-2">Loading...</div>
             </div>
-            <button class="btn-secondary w-full mt-4 text-xs py-2">Check Availability</button>
           </div>
         </div>
       </div>
@@ -538,10 +474,16 @@
           <p class="text-gray-500 text-sm mb-6">Help me understand what you're planning so I can give you the best recommendations.</p>
 
           <div class="space-y-5">
+            <!-- Title -->
+            <div>
+              <label class="text-gray-700 text-sm font-medium block mb-2">Meeting title</label>
+              <input type="text" id="meeting-title" placeholder="e.g. Q2 Design Review, Team Strategy Session…"/>
+            </div>
+
             <!-- About -->
             <div>
               <label class="text-gray-700 text-sm font-medium block mb-2">What's the meeting about?</label>
-              <textarea rows="3" placeholder="e.g. Discuss product strategy, review designs, align on marketing messaging..." id="meeting-about"></textarea>
+              <textarea rows="2" placeholder="e.g. Discuss product strategy, review designs, align on marketing messaging..." id="meeting-about"></textarea>
             </div>
 
             <!-- Goal -->
@@ -570,11 +512,7 @@
             <div>
               <label class="text-gray-700 text-sm font-medium block mb-2">Who needs to be there?</label>
               <div class="flex items-center gap-2 flex-wrap" id="attendee-list">
-                <div class="avatar cursor-pointer" style="background:#3b1f6e;color:white;" title="Jane Cooper">JC</div>
-                <div class="avatar cursor-pointer" style="background:#0e7490;color:white;" title="Alex Turner">AT</div>
-                <div class="avatar cursor-pointer" style="background:#92400e;color:white;" title="Sarah Mills">SM</div>
-                <div class="avatar cursor-pointer" style="background:#14532d;color:white;" title="Mike Kim">MK</div>
-                <div class="avatar cursor-pointer" style="background:#f0f1f8; border: 1.5px dashed #b0b4cc; color:#94a3b8;" title="Add more">+</div>
+                <div class="text-gray-400 text-xs">Loading team...</div>
               </div>
             </div>
 
@@ -587,7 +525,7 @@
                   <option value="15">15 Minutes</option>
                   <option value="30">30 Minutes</option>
                   <option value="45">45 Minutes</option>
-                  <option selected value="60">60 Minutes</option>
+                  <option value="60">60 Minutes</option>
                   <option value="90">90 Minutes</option>
                   <option value="120">2 Hours</option>
                 </select>
@@ -598,12 +536,12 @@
               </div>
             </div>
 
-            <!-- Context -->
+            <!-- Location -->
             <div>
               <label class="text-gray-700 text-sm font-medium block mb-2">
-                Anything I should know? <span class="text-gray-400">(optional)</span>
+                Location <span class="text-gray-400">(optional)</span>
               </label>
-              <textarea rows="2" placeholder="Add any context, documents, or specific concerns..." id="meeting-context"></textarea>
+              <input type="text" id="meeting-location" placeholder="e.g. Room A, Zoom, Google Meet…"/>
             </div>
           </div>
 
@@ -690,20 +628,15 @@
               </div>
               <div>
                 <div class="text-gray-400 text-xs mb-0.5">Date & Time</div>
-                <div class="text-gray-800 text-xs">May 05, 2026 at 10:00 AM</div>
+                <div class="text-gray-800 text-xs" id="summary-datetime">—</div>
               </div>
               <div>
                 <div class="text-gray-400 text-xs mb-0.5">Location</div>
-                <div class="text-gray-800 text-xs">Remote</div>
+                <div class="text-gray-800 text-xs" id="summary-location">—</div>
               </div>
               <div class="col-span-2">
                 <div class="text-gray-400 text-xs mb-1">Attendees</div>
-                <div class="flex gap-2">
-                  <div class="avatar w-7 h-7 text-xs" style="background:#3b1f6e;color:white;" title="Jane Cooper">JC</div>
-                  <div class="avatar w-7 h-7 text-xs" style="background:#0e7490;color:white;" title="Alex Turner">AT</div>
-                  <div class="avatar w-7 h-7 text-xs" style="background:#92400e;color:white;" title="Sarah Mills">SM</div>
-                  <div class="avatar w-7 h-7 text-xs" style="background:#14532d;color:white;" title="Mike Kim">MK</div>
-                </div>
+                <div class="flex gap-2 flex-wrap" id="summary-attendees"></div>
               </div>
             </div>
           </div>
@@ -711,20 +644,8 @@
           <!-- Key Topics -->
           <div class="lcard p-5 mb-4">
             <div class="text-gray-800 font-semibold text-sm mb-3">🗂 Key Topics to Cover</div>
-            <div class="space-y-2">
-              <div class="flex items-center gap-3">
-                <div class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold" style="background:#ede9ff;color:#7c3aed;">1</div>
-                <div class="text-sm text-gray-700">Review design mockups</div>
-                <span class="ml-auto tag">Covered insight</span>
-              </div>
-              <div class="flex items-center gap-3">
-                <div class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold" style="background:#ede9ff;color:#7c3aed;">2</div>
-                <div class="text-sm text-gray-700">Finalise colour palette</div>
-              </div>
-              <div class="flex items-center gap-3">
-                <div class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold" style="background:#ede9ff;color:#7c3aed;">3</div>
-                <div class="text-sm text-gray-700">Discuss marketing strategy</div>
-              </div>
+            <div class="space-y-2" id="key-topics-list">
+              <div class="text-gray-400 text-xs">—</div>
             </div>
           </div>
 
@@ -733,31 +654,31 @@
             <div class="text-gray-800 font-semibold text-sm mb-4">Score Breakdown</div>
             <div class="grid grid-cols-4 gap-3 text-center">
               <div>
-                <div class="text-2xl font-bold text-purple-600">5</div>
-                <div class="text-gray-400 text-xs">/20</div>
-                <div class="progress-bar mt-2"><div class="progress-fill" style="width:25%"></div></div>
+                <div class="text-2xl font-bold text-purple-600" id="focus-score">—</div>
+                <div class="text-gray-400 text-xs">/25</div>
+                <div class="progress-bar mt-2"><div class="progress-fill" id="focus-bar" style="width:0%"></div></div>
                 <div class="text-gray-500 text-xs mt-1">Focus</div>
               </div>
               <div>
-                <div class="text-2xl font-bold text-blue-500">10</div>
-                <div class="text-gray-400 text-xs">/16</div>
-                <div class="progress-bar mt-2"><div class="progress-fill" style="width:62%;background:linear-gradient(90deg,#2563eb,#60a5fa)"></div></div>
+                <div class="text-2xl font-bold text-blue-500" id="collab-score">—</div>
+                <div class="text-gray-400 text-xs">/25</div>
+                <div class="progress-bar mt-2"><div class="progress-fill" id="collab-bar" style="width:0%;background:linear-gradient(90deg,#2563eb,#60a5fa)"></div></div>
                 <div class="text-gray-500 text-xs mt-1">Collaboration</div>
               </div>
               <div>
-                <div class="text-2xl font-bold text-green-600">15</div>
-                <div class="text-gray-400 text-xs">/20</div>
-                <div class="progress-bar mt-2"><div class="progress-fill" style="width:75%;background:linear-gradient(90deg,#059669,#34d399)"></div></div>
+                <div class="text-2xl font-bold text-green-600" id="time-score">—</div>
+                <div class="text-gray-400 text-xs">/25</div>
+                <div class="progress-bar mt-2"><div class="progress-fill" id="time-bar" style="width:0%;background:linear-gradient(90deg,#059669,#34d399)"></div></div>
                 <div class="text-gray-500 text-xs mt-1">Time</div>
               </div>
               <div>
-                <div class="text-2xl font-bold text-yellow-600">12</div>
-                <div class="text-gray-400 text-xs">/15</div>
-                <div class="progress-bar mt-2"><div class="progress-fill" style="width:80%;background:linear-gradient(90deg,#d97706,#fbbf24)"></div></div>
+                <div class="text-2xl font-bold text-yellow-600" id="balance-score">—</div>
+                <div class="text-gray-400 text-xs">/25</div>
+                <div class="progress-bar mt-2"><div class="progress-fill" id="balance-bar" style="width:0%;background:linear-gradient(90deg,#d97706,#fbbf24)"></div></div>
                 <div class="text-gray-500 text-xs mt-1">Balance</div>
               </div>
             </div>
-            <button class="text-xs text-violet-600 hover:underline mt-4 block">View full score breakdown →</button>
+            <button class="text-xs text-violet-600 hover:underline mt-4 block" onclick="openScoreModal()">View full score breakdown →</button>
           </div>
 
           <!-- Navigation -->
@@ -772,54 +693,34 @@
           <!-- Live Value Score -->
           <div class="lcard p-5 text-center">
             <div class="text-gray-800 text-sm font-semibold mb-1">Live Value Score</div>
-            <div class="text-gray-400 text-xs mb-4">Medium</div>
+            <div class="text-gray-400 text-xs mb-4" id="score-tier">—</div>
 
             <!-- Ring -->
             <div class="score-ring mx-auto" style="width:100px;height:100px;">
               <svg width="100" height="100" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="40" fill="none" stroke="#e8eaf2" stroke-width="10"/>
-                <circle cx="50" cy="50" r="40" fill="none" stroke="#f59e0b" stroke-width="10"
-                  stroke-dasharray="251" stroke-dashoffset="96" stroke-linecap="round"/>
+                <circle id="score-ring-fill" cx="50" cy="50" r="40" fill="none" stroke="#f59e0b" stroke-width="10"
+                  stroke-dasharray="251" stroke-dashoffset="251" stroke-linecap="round"/>
               </svg>
               <div class="score-label">
-                <div class="text-gray-900 text-2xl font-bold">62</div>
+                <div class="text-gray-900 text-2xl font-bold" id="score-value">—</div>
                 <div class="text-gray-400 text-xs">/100</div>
               </div>
             </div>
 
             <button class="text-xs text-violet-600 hover:underline mt-3 block mx-auto" onclick="openScoreModal()">How is this calculated?</button>
 
-            <div class="lcard-sm p-3 mt-4 text-left">
-              <div class="text-xs text-orange-500 font-medium mb-1">Shorten this meeting</div>
-              <div class="text-xs text-gray-500">This meeting has value, but can be done faster and more focused.</div>
+            <div class="lcard-sm p-3 mt-4 text-left" id="score-tip-box">
+              <div class="text-xs text-orange-500 font-medium mb-1" id="score-tip-title">—</div>
+              <div class="text-xs text-gray-500" id="score-tip-body"></div>
             </div>
           </div>
 
           <!-- Top Factors -->
           <div class="lcard p-4">
             <div class="text-gray-800 text-sm font-semibold mb-3">Top Factors</div>
-            <div class="space-y-3">
-              <div class="flex gap-2 items-start">
-                <span class="text-green-500 text-sm mt-0.5">✓</span>
-                <div>
-                  <div class="text-xs text-gray-800 font-semibold">Good attendee fit</div>
-                  <div class="text-xs text-gray-500">Nice — you've invited people relevant to the topic.</div>
-                </div>
-              </div>
-              <div class="flex gap-2 items-start">
-                <span class="text-orange-500 text-sm mt-0.5">⚠</span>
-                <div>
-                  <div class="text-xs text-gray-800 font-semibold">Decision not urgent</div>
-                  <div class="text-xs text-gray-500">This doesn't seem like a time-sensitive decision is required.</div>
-                </div>
-              </div>
-              <div class="flex gap-2 items-start">
-                <span class="text-blue-500 text-sm mt-0.5">ℹ</span>
-                <div>
-                  <div class="text-xs text-gray-800 font-semibold">Information sharing</div>
-                  <div class="text-xs text-gray-500">This could be done async — there may be no need to meet.</div>
-                </div>
-              </div>
+            <div class="space-y-3" id="factors-list">
+              <div class="text-gray-400 text-xs">—</div>
             </div>
           </div>
 
@@ -865,66 +766,11 @@
           <p class="text-gray-500 text-sm mb-6">Based on the analysis, here are the best options for your meeting.</p>
 
           <!-- Primary Recommendation -->
-          <div class="rec-option recommended mb-4">
-            <div class="flex items-start justify-between mb-3">
-              <div class="flex items-center gap-3">
-                <span class="text-2xl">⏱</span>
-                <div>
-                  <div class="text-gray-900 font-semibold">Shorten this meeting</div>
-                  <div class="text-gray-500 text-xs mt-0.5">Recommended · 30 minutes · Confidence: High</div>
-                </div>
-              </div>
-              <div class="flex gap-2">
-                <span class="badge badge-purple">Score 82/100</span>
-                <span class="badge badge-orange">Medium Impact</span>
-              </div>
-            </div>
-
-            <div class="lcard-sm p-3 mb-3">
-              <div class="text-gray-800 text-xs font-semibold mb-2">Why this option?</div>
-              <div class="space-y-1">
-                <div class="flex gap-2 text-xs text-gray-600"><span class="text-green-500">✓</span>Better focus — less time means tighter agenda</div>
-                <div class="flex gap-2 text-xs text-gray-600"><span class="text-green-500">✓</span>Respects everyone's time and calendar</div>
-                <div class="flex gap-2 text-xs text-gray-600"><span class="text-green-500">✓</span>Async follow-ups can handle remaining items</div>
-              </div>
-            </div>
-
-            <button class="btn-primary w-full py-2 text-sm" onclick="showScreen('review')">Use this recommendation →</button>
-          </div>
+          <div id="rec-primary" class="mb-4"></div>
 
           <!-- Other Options -->
           <div class="text-gray-800 font-semibold text-sm mb-3">Other options</div>
-          <div class="grid grid-cols-2 gap-4 mb-6">
-            <!-- Option 2 -->
-            <div class="rec-option">
-              <div class="flex items-center gap-2 mb-2">
-                <span class="text-xl">✉</span>
-                <div class="text-gray-800 text-sm font-semibold">Send an email instead</div>
-              </div>
-              <div class="badge badge-blue mb-3">Time saved: ~60 min</div>
-              <div class="space-y-1 mb-3">
-                <div class="text-xs text-gray-500">• No scheduling needed</div>
-                <div class="text-xs text-gray-500">• Works across time zones</div>
-                <div class="text-xs text-gray-500">• Async input from everyone</div>
-              </div>
-              <button class="btn-secondary w-full py-2 text-xs">Draft this instead</button>
-            </div>
-
-            <!-- Option 3 -->
-            <div class="rec-option">
-              <div class="flex items-center gap-2 mb-2">
-                <span class="text-xl">🔄</span>
-                <div class="text-gray-800 text-sm font-semibold">Make it async</div>
-              </div>
-              <div class="badge badge-green mb-3">Time saved: ~45 min</div>
-              <div class="space-y-1 mb-3">
-                <div class="text-xs text-gray-500">• Use Loom or Notion</div>
-                <div class="text-xs text-gray-500">• Collect written feedback</div>
-                <div class="text-xs text-gray-500">• Flexible for all attendees</div>
-              </div>
-              <button class="btn-secondary w-full py-2 text-xs">Choose this route</button>
-            </div>
-          </div>
+          <div class="grid grid-cols-2 gap-4 mb-6" id="rec-others"></div>
 
           <!-- Benefits Footer -->
           <div class="lcard p-4 mb-4">
@@ -963,51 +809,8 @@
         <div class="w-64 flex-shrink-0 space-y-4">
           <div class="lcard p-5">
             <div class="text-gray-800 text-sm font-semibold mb-1">Proposed Agenda</div>
-            <div class="text-gray-400 text-xs mb-4">30 min · 4 attendees</div>
-
-            <div class="relative">
-              <div class="agenda-item">
-                <div class="flex flex-col items-center">
-                  <div class="agenda-dot bg-purple-500"></div>
-                  <div class="agenda-line flex-1 mt-1" style="height:36px;"></div>
-                </div>
-                <div class="pb-4">
-                  <div class="text-gray-800 text-xs font-medium">Warm-up & goals</div>
-                  <div class="text-gray-400 text-xs">5 min</div>
-                </div>
-              </div>
-              <div class="agenda-item">
-                <div class="flex flex-col items-center">
-                  <div class="agenda-dot bg-blue-500"></div>
-                  <div class="agenda-line flex-1 mt-1" style="height:36px;"></div>
-                </div>
-                <div class="pb-4">
-                  <div class="text-gray-800 text-xs font-medium">Review design mockups</div>
-                  <div class="text-gray-400 text-xs">10 min</div>
-                </div>
-              </div>
-              <div class="agenda-item">
-                <div class="flex flex-col items-center">
-                  <div class="agenda-dot bg-green-500"></div>
-                  <div class="agenda-line flex-1 mt-1" style="height:36px;"></div>
-                </div>
-                <div class="pb-4">
-                  <div class="text-gray-800 text-xs font-medium">Align & decide</div>
-                  <div class="text-gray-400 text-xs">10 min</div>
-                </div>
-              </div>
-              <div class="agenda-item">
-                <div class="flex flex-col items-center">
-                  <div class="agenda-dot bg-orange-500"></div>
-                </div>
-                <div>
-                  <div class="text-gray-800 text-xs font-medium">Next steps</div>
-                  <div class="text-gray-400 text-xs">5 min</div>
-                </div>
-              </div>
-            </div>
-
-            <button class="btn-secondary w-full py-2 text-xs mt-4">✏ Edit agenda</button>
+            <div class="text-gray-400 text-xs mb-4" id="agenda-meta">—</div>
+            <div class="relative" id="agenda-items-list"></div>
           </div>
 
           <!-- AI assistant -->
@@ -1054,62 +857,47 @@
           </div>
 
           <!-- Recommended Plan Card -->
-          <div class="lcard p-5">
+          <div class="lcard p-5" id="review-plan-card">
             <div class="flex items-center justify-between mb-4">
               <div class="flex items-center gap-3">
                 <span class="text-gray-700 text-sm font-semibold">Recommended plan</span>
-                <span style="background:#ede9ff;color:#7c3aed;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:0.03em;">SHORTEN THIS MEETING</span>
+                <span id="review-rec-badge" style="background:#ede9ff;color:#7c3aed;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:0.03em;"></span>
               </div>
-              <button class="text-xs text-violet-600 hover:underline flex items-center gap-1">✏ Edit all</button>
             </div>
-
             <div class="flex gap-5">
-              <!-- Left: icon + desc -->
               <div class="flex gap-4 flex-1">
-                <div style="width:64px;height:64px;background:linear-gradient(135deg,#ede9ff,#ddd6fe);border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:28px;">📅</div>
+                <div style="width:64px;height:64px;background:linear-gradient(135deg,#ede9ff,#ddd6fe);border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:28px;" id="review-rec-icon">📅</div>
                 <div>
-                  <div class="text-gray-900 font-bold text-base mb-1">Shorten this meeting</div>
-                  <div class="text-gray-500 text-xs mb-3">This meeting has value, but can be shorter and more focused.</div>
+                  <div class="text-gray-900 font-bold text-base mb-1" id="review-rec-title">—</div>
+                  <div class="text-gray-500 text-xs mb-3" id="review-rec-reasoning">—</div>
                   <div class="flex gap-2 flex-wrap">
-                    <span style="background:#f0ebff;color:#7c3aed;font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;">Value Score: 62/100</span>
-                    <span style="background:#fff7ed;color:#ea580c;font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;">Medium Impact</span>
-                    <span style="background:#f0fdf4;color:#16a34a;font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;">Confidence: High</span>
+                    <span style="background:#f0ebff;color:#7c3aed;font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;" id="review-score-badge">Score —/100</span>
                   </div>
                 </div>
               </div>
-
-              <!-- Right: details -->
-              <div style="width:220px;flex-shrink:0;border-left:1px solid #e8eaf2;padding-left:20px;space-y:0;" class="space-y-3">
+              <div style="width:220px;flex-shrink:0;border-left:1px solid #e8eaf2;padding-left:20px;" class="space-y-3">
                 <div class="flex items-start gap-2">
                   <span class="text-gray-400 text-sm mt-0.5">⏱</span>
-                  <div><div class="text-gray-400 text-xs">Duration</div><div class="text-gray-800 text-xs font-semibold">30 minutes</div></div>
-                  <button class="ml-auto text-xs text-violet-500 hover:underline">Edit</button>
+                  <div><div class="text-gray-400 text-xs">Duration</div><div class="text-gray-800 text-xs font-semibold" id="review-duration">—</div></div>
                 </div>
                 <div class="flex items-start gap-2">
                   <span class="text-gray-400 text-sm mt-0.5">⚡</span>
-                  <div><div class="text-gray-400 text-xs">Time saved</div><div class="text-gray-800 text-xs font-semibold">30 minutes</div></div>
+                  <div><div class="text-gray-400 text-xs">Time saved</div><div class="text-gray-800 text-xs font-semibold" id="review-saved">—</div></div>
                 </div>
                 <div class="flex items-start gap-2">
                   <span class="text-gray-400 text-sm mt-0.5">📆</span>
-                  <div><div class="text-gray-400 text-xs">When</div><div class="text-gray-800 text-xs font-semibold">May 28, 2024 at 10:00 AM</div></div>
+                  <div><div class="text-gray-400 text-xs">When</div><div class="text-gray-800 text-xs font-semibold" id="review-when">—</div></div>
                 </div>
                 <div class="flex items-start gap-2">
                   <span class="text-gray-400 text-sm mt-0.5">📍</span>
-                  <div><div class="text-gray-400 text-xs">Where</div><div class="text-gray-800 text-xs font-semibold">Room A</div></div>
+                  <div><div class="text-gray-400 text-xs">Where</div><div class="text-gray-800 text-xs font-semibold" id="review-where">—</div></div>
                 </div>
                 <div class="flex items-start gap-2">
                   <span class="text-gray-400 text-sm mt-0.5">👥</span>
                   <div>
                     <div class="text-gray-400 text-xs mb-1">Attendees</div>
-                    <div class="flex gap-1">
-                      <div class="avatar w-6 h-6 text-xs" style="background:#3b1f6e;color:white;">JC</div>
-                      <div class="avatar w-6 h-6 text-xs" style="background:#0e7490;color:white;">AT</div>
-                      <div class="avatar w-6 h-6 text-xs" style="background:#92400e;color:white;">SM</div>
-                      <div class="avatar w-6 h-6 text-xs" style="background:#14532d;color:white;">MK</div>
-                      <div class="avatar w-6 h-6 text-xs" style="background:#e8eaf2;color:#94a3b8;">+1</div>
-                    </div>
+                    <div class="flex gap-1 flex-wrap" id="review-attendees"></div>
                   </div>
-                  <button class="ml-auto text-xs text-violet-500 hover:underline">Edit</button>
                 </div>
               </div>
             </div>
@@ -1120,86 +908,9 @@
             <!-- Proposed Agenda -->
             <div class="lcard p-5">
               <div class="flex justify-between items-center mb-4">
-                <span class="text-gray-800 font-semibold text-sm">Proposed agenda <span class="text-gray-400 font-normal">(30 min)</span></span>
-                <button class="text-xs text-violet-600 hover:underline flex items-center gap-1">✏ Edit agenda</button>
+                <span class="text-gray-800 font-semibold text-sm">Proposed agenda <span class="text-gray-400 font-normal" id="review-agenda-label"></span></span>
               </div>
-              <div class="space-y-0">
-                <!-- item -->
-                <div style="display:flex;gap:12px;padding-bottom:16px;">
-                  <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
-                    <div style="width:10px;height:10px;border-radius:50%;background:#7c3aed;margin-top:3px;flex-shrink:0;"></div>
-                    <div style="width:2px;flex:1;background:#e8eaf2;margin-top:3px;"></div>
-                  </div>
-                  <div style="flex:1;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                      <div>
-                        <div class="text-gray-800 text-xs font-semibold">Welcome & goal</div>
-                        <div class="text-gray-400 text-xs">Align on the objective</div>
-                      </div>
-                      <span style="background:#f0ebff;color:#7c3aed;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0;">5 min</span>
-                    </div>
-                  </div>
-                </div>
-                <div style="display:flex;gap:12px;padding-bottom:16px;">
-                  <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
-                    <div style="width:10px;height:10px;border-radius:50%;background:#3b82f6;margin-top:3px;"></div>
-                    <div style="width:2px;flex:1;background:#e8eaf2;margin-top:3px;"></div>
-                  </div>
-                  <div style="flex:1;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                      <div>
-                        <div class="text-gray-800 text-xs font-semibold">Review latest designs</div>
-                        <div class="text-gray-400 text-xs">Walkthrough + feedback</div>
-                      </div>
-                      <span style="background:#eff6ff;color:#2563eb;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0;">10 min</span>
-                    </div>
-                  </div>
-                </div>
-                <div style="display:flex;gap:12px;padding-bottom:16px;">
-                  <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
-                    <div style="width:10px;height:10px;border-radius:50%;background:#059669;margin-top:3px;"></div>
-                    <div style="width:2px;flex:1;background:#e8eaf2;margin-top:3px;"></div>
-                  </div>
-                  <div style="flex:1;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                      <div>
-                        <div class="text-gray-800 text-xs font-semibold">Provide feedback</div>
-                        <div class="text-gray-400 text-xs">Open discussion</div>
-                      </div>
-                      <span style="background:#dcfce7;color:#16a34a;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0;">10 min</span>
-                    </div>
-                  </div>
-                </div>
-                <div style="display:flex;gap:12px;padding-bottom:16px;">
-                  <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
-                    <div style="width:10px;height:10px;border-radius:50%;background:#f59e0b;margin-top:3px;"></div>
-                    <div style="width:2px;flex:1;background:#e8eaf2;margin-top:3px;"></div>
-                  </div>
-                  <div style="flex:1;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                      <div>
-                        <div class="text-gray-800 text-xs font-semibold">Align & decide</div>
-                        <div class="text-gray-400 text-xs">Confirm direction</div>
-                      </div>
-                      <span style="background:#fff7ed;color:#ea580c;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0;">5 min</span>
-                    </div>
-                  </div>
-                </div>
-                <div style="display:flex;gap:12px;">
-                  <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
-                    <div style="width:10px;height:10px;border-radius:50%;background:#94a3b8;margin-top:3px;"></div>
-                  </div>
-                  <div style="flex:1;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                      <div>
-                        <div class="text-gray-800 text-xs font-semibold">Next steps</div>
-                        <div class="text-gray-400 text-xs">Action items & owners</div>
-                      </div>
-                      <span style="background:#f1f5f9;color:#94a3b8;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0;">0 min</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <div id="review-agenda-list" class="space-y-0"></div>
             </div>
 
             <!-- Right column -->
@@ -1207,29 +918,19 @@
               <!-- What's different -->
               <div class="lcard p-5">
                 <div class="text-gray-800 font-semibold text-sm mb-3">What's different in this plan?</div>
-                <div class="space-y-2">
-                  <div class="flex gap-2 items-start"><span style="color:#7c3aed;font-weight:bold;flex-shrink:0;">✓</span><div class="text-gray-600 text-xs">Removed unnecessary updates</div></div>
-                  <div class="flex gap-2 items-start"><span style="color:#7c3aed;font-weight:bold;flex-shrink:0;">✓</span><div class="text-gray-600 text-xs">Combined feedback and discussion</div></div>
-                  <div class="flex gap-2 items-start"><span style="color:#7c3aed;font-weight:bold;flex-shrink:0;">✓</span><div class="text-gray-600 text-xs">Focused on decision and next steps</div></div>
-                  <div class="flex gap-2 items-start"><span style="color:#7c3aed;font-weight:bold;flex-shrink:0;">✓</span><div class="text-gray-600 text-xs">Clear time boxes for each topic</div></div>
-                </div>
+                <div class="space-y-2" id="review-diff-list"></div>
               </div>
 
-              <!-- Context to share -->
-              <div class="lcard p-5">
+              <!-- Email draft (shown for async/cancel recs) -->
+              <div class="lcard p-5" id="review-email-box" style="display:none;">
                 <div class="flex items-center justify-between mb-2">
-                  <div class="text-gray-800 font-semibold text-sm">Context to share before the meeting</div>
-                  <span style="background:#dcfce7;color:#16a34a;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;">Recommended</span>
+                  <div class="text-gray-800 font-semibold text-sm">Draft email to attendees</div>
+                  <span style="background:#eff6ff;color:#2563eb;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;">Async</span>
                 </div>
-                <p class="text-gray-500 text-xs mb-3">Share this 24 hours before the meeting so everyone can come prepared.</p>
-                <div style="background:#f8f9fc;border:1px solid #e4e6ef;border-radius:8px;padding:10px;display:flex;align-items:center;gap:10px;">
-                  <span style="font-size:18px;">📄</span>
-                  <div style="flex:1;">
-                    <div class="text-gray-800 text-xs font-semibold">Design Review – Background & Context</div>
-                    <div class="text-gray-400 text-xs">Google Doc</div>
-                  </div>
-                  <button style="background:#ffffff;border:1px solid #d8dae8;border-radius:6px;padding:4px 10px;font-size:11px;color:#64748b;cursor:pointer;white-space:nowrap;">Copy link 🔗</button>
-                </div>
+                <p class="text-gray-500 text-xs mb-3" id="review-email-preview"></p>
+                <button onclick="openEmailDraft()" style="background:#7c3aed;border:none;border-radius:8px;padding:8px 14px;font-size:12px;color:white;cursor:pointer;display:flex;align-items:center;gap:6px;font-weight:600;">
+                  ✉ View &amp; copy email draft
+                </button>
               </div>
             </div>
           </div>
@@ -1242,24 +943,7 @@
           <!-- Impact summary -->
           <div>
             <div class="text-gray-800 font-semibold text-sm mb-3">Impact summary</div>
-            <div class="space-y-3">
-              <div style="background:#f8f9fc;border-radius:10px;padding:10px;display:flex;align-items:center;gap:10px;">
-                <div style="width:34px;height:34px;background:#fff7ed;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">⏱</div>
-                <div><div class="text-gray-900 text-xs font-bold">30 minutes</div><div class="text-gray-400 text-xs">Time saved</div></div>
-              </div>
-              <div style="background:#f8f9fc;border-radius:10px;padding:10px;display:flex;align-items:center;gap:10px;">
-                <div style="width:34px;height:34px;background:#eff6ff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">👥</div>
-                <div><div class="text-gray-900 text-xs font-bold">6 attendees</div><div class="text-gray-400 text-xs">Time saved for everyone</div></div>
-              </div>
-              <div style="background:#f8f9fc;border-radius:10px;padding:10px;display:flex;align-items:center;gap:10px;">
-                <div style="width:34px;height:34px;background:#f0fdf4;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">⚡</div>
-                <div><div class="text-gray-900 text-xs font-bold">3x more focused</div><div class="text-gray-400 text-xs">More time on what matters</div></div>
-              </div>
-              <div style="background:#f8f9fc;border-radius:10px;padding:10px;display:flex;align-items:center;gap:10px;">
-                <div style="width:34px;height:34px;background:#fdf2f8;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🎯</div>
-                <div><div class="text-gray-900 text-xs font-bold">Better outcomes</div><div class="text-gray-400 text-xs">Clear decisions & next steps</div></div>
-              </div>
-            </div>
+            <div class="space-y-3" id="review-impact-list"></div>
           </div>
 
           <!-- Before / After table -->
@@ -1268,22 +952,15 @@
               <div></div>
               <div class="text-gray-400 font-medium text-center">Before</div>
               <div></div>
-              <div style="color:#7c3aed;font-weight:700;text-center;">After</div>
-
+              <div style="color:#7c3aed;font-weight:700;">After</div>
               <div class="text-gray-500">Duration</div>
-              <div class="text-gray-700 font-medium text-center">60 min</div>
+              <div class="text-gray-700 font-medium text-center" id="review-before-dur">—</div>
               <div style="color:#7c3aed;font-size:14px;text-align:center;">→</div>
-              <div style="color:#7c3aed;font-weight:700;">30 min</div>
-
-              <div class="text-gray-500">Focus time</div>
-              <div class="text-gray-700 font-medium text-center">40%</div>
+              <div style="color:#7c3aed;font-weight:700;" id="review-after-dur">—</div>
+              <div class="text-gray-500">Score</div>
+              <div class="text-gray-700 font-medium text-center" id="review-before-score">—</div>
               <div style="color:#7c3aed;font-size:14px;text-align:center;">→</div>
-              <div style="color:#7c3aed;font-weight:700;">80%</div>
-
-              <div class="text-gray-500">Decision clarity</div>
-              <div class="text-gray-700 font-medium text-center">Medium</div>
-              <div style="color:#7c3aed;font-size:14px;text-align:center;">→</div>
-              <div style="color:#7c3aed;font-weight:700;">High</div>
+              <div style="color:#7c3aed;font-weight:700;" id="review-after-score">—</div>
             </div>
           </div>
 
@@ -1293,7 +970,7 @@
               <span style="color:#7c3aed;font-size:14px;">✦</span>
               <div style="color:#7c3aed;font-weight:700;font-size:12px;">Pro tip</div>
             </div>
-            <div class="text-gray-600 text-xs leading-relaxed">Shorter, focused meetings drive better participation and faster decisions.</div>
+            <div class="text-gray-600 text-xs leading-relaxed" id="review-pro-tip">Shorter, focused meetings drive better participation and faster decisions.</div>
           </div>
         </div>
       </div>
@@ -1302,8 +979,7 @@
       <div class="light-topbar flex items-center justify-between px-6 py-3 flex-shrink-0" style="border-top:1px solid #e4e6ef;border-bottom:none;">
         <button class="btn-secondary flex items-center gap-2" onclick="showScreen('recommendations')">← Back</button>
         <div class="flex items-center gap-3">
-          <button style="background:#ffffff;border:1px solid #d8dae8;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:500;color:#64748b;cursor:pointer;display:flex;align-items:center;gap:6px;">🔖 Save for later</button>
-          <button style="background:#0f172a;color:#ffffff;border:none;border-radius:8px;padding:10px 22px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;" onclick="showScreen('dashboard')">📅 Confirm & Create Meeting →</button>
+          <button id="confirm-btn" style="background:#0f172a;color:#ffffff;border:none;border-radius:8px;padding:10px 22px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;" onclick="confirmMeeting()">📅 Confirm & Schedule Meeting →</button>
         </div>
       </div>
     </div>
@@ -1471,24 +1147,350 @@
     </div>
   </div>
 
-  <script>
-    let selectedGoal = null;
+  <!-- ===== EMAIL DRAFT MODAL ===== -->
+  <div id="email-draft-modal" onclick="if(event.target===this)closeEmailModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:#ffffff;border-radius:16px;width:560px;max-height:85vh;overflow-y:auto;padding:28px;position:relative;" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <div class="text-gray-900 text-lg font-bold">Email Draft</div>
+          <div class="text-gray-400 text-xs mt-0.5">Copy and paste into your email client</div>
+        </div>
+        <button onclick="closeEmailModal()" style="background:#f1f5f9;border:none;color:#94a3b8;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;">✕</button>
+      </div>
+      <textarea id="email-draft-text" rows="14" style="background:#f8f9fc;border:1px solid #e4e6ef;border-radius:10px;color:#1e293b;padding:14px;width:100%;font-size:13px;font-family:monospace;outline:none;resize:vertical;line-height:1.6;"></textarea>
+      <div class="flex gap-3 mt-4">
+        <button id="copy-email-btn" onclick="copyEmailDraft()" class="btn-primary flex-1">Copy to clipboard</button>
+        <button onclick="closeEmailModal()" style="background:#f1f5f9;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:500;color:#64748b;cursor:pointer;">Close</button>
+      </div>
+    </div>
+  </div>
 
+  <!-- ===== FEEDBACK SCREEN (in app) ===== -->
+  <div id="screen-feedback" class="screen flex-col h-full overflow-y-auto light-zone" style="display:none;">
+    <div class="light-topbar flex items-center justify-between px-6 py-4">
+      <div>
+        <div class="text-gray-900 font-bold text-lg">Post-Meeting Feedback</div>
+        <div class="text-gray-400 text-xs">Collect and review how meetings went</div>
+      </div>
+      <button class="btn-primary text-sm px-4 py-2" onclick="showFeedbackForm()">+ Request Feedback</button>
+    </div>
+
+    <div class="p-6 space-y-5 fade-in">
+      <!-- Summary stats -->
+      <div class="grid grid-cols-4 gap-4">
+        <div class="stat-card">
+          <div class="text-gray-400 text-xs mb-1">Avg. Meeting Rating</div>
+          <div class="text-gray-900 text-3xl font-bold">4.1<span class="text-gray-400 text-lg">/5</span></div>
+          <div class="text-green-600 text-xs mt-1">↑ vs last month</div>
+        </div>
+        <div class="stat-card">
+          <div class="text-gray-400 text-xs mb-1">Responses</div>
+          <div class="text-gray-900 text-3xl font-bold">24</div>
+          <div class="text-gray-400 text-xs mt-1">from 6 meetings</div>
+        </div>
+        <div class="stat-card">
+          <div class="text-gray-400 text-xs mb-1">Worth It Rate</div>
+          <div class="text-gray-900 text-3xl font-bold">78%</div>
+          <div class="progress-bar mt-2"><div class="progress-fill" style="width:78%"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="text-gray-400 text-xs mb-1">Avg. Time Well Spent</div>
+          <div class="text-gray-900 text-3xl font-bold">3.8<span class="text-gray-400 text-lg">/5</span></div>
+          <div class="text-orange-500 text-xs mt-1">Room to improve</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-5">
+        <!-- Recent feedback -->
+        <div class="col-span-2 lcard p-5">
+          <div class="text-gray-800 font-semibold mb-4">Recent Feedback</div>
+          <div class="space-y-4">
+            <div class="lcard-sm p-4">
+              <div class="flex items-start justify-between mb-2">
+                <div>
+                  <div class="text-gray-800 text-sm font-semibold">Q2 Design Review</div>
+                  <div class="text-gray-400 text-xs">4 responses · Apr 24</div>
+                </div>
+                <div class="flex gap-1">
+                  <span style="color:#f59e0b;">★★★★</span><span style="color:#d1d5db;">★</span>
+                  <span class="text-gray-700 text-xs font-bold ml-1">4.0</span>
+                </div>
+              </div>
+              <div class="flex gap-4 text-xs text-gray-500">
+                <span class="text-green-600 font-medium">75% worth it</span>
+                <span>·</span><span>Avg duration rating: 3.5/5</span>
+                <span>·</span><span>Clarity: 4.2/5</span>
+              </div>
+              <div class="mt-3 space-y-1">
+                <div style="background:#f0fdf4;border-left:3px solid #22c55e;padding:6px 10px;border-radius:0 6px 6px 0;font-size:12px;color:#374151;">"Good structure, came well prepared"</div>
+                <div style="background:#fff7ed;border-left:3px solid #f97316;padding:6px 10px;border-radius:0 6px 6px 0;font-size:12px;color:#374151;">"Could have been an email tbh"</div>
+              </div>
+            </div>
+            <div class="lcard-sm p-4">
+              <div class="flex items-start justify-between mb-2">
+                <div>
+                  <div class="text-gray-800 text-sm font-semibold">Team Strategy Sync</div>
+                  <div class="text-gray-400 text-xs">6 responses · Apr 22</div>
+                </div>
+                <div class="flex gap-1">
+                  <span style="color:#f59e0b;">★★★★★</span>
+                  <span class="text-gray-700 text-xs font-bold ml-1">4.8</span>
+                </div>
+              </div>
+              <div class="flex gap-4 text-xs text-gray-500">
+                <span class="text-green-600 font-medium">100% worth it</span>
+                <span>·</span><span>Avg duration rating: 4.8/5</span>
+              </div>
+              <div class="mt-3">
+                <div style="background:#f0fdf4;border-left:3px solid #22c55e;padding:6px 10px;border-radius:0 6px 6px 0;font-size:12px;color:#374151;">"One of the best team meetings we've had"</div>
+              </div>
+            </div>
+            <div class="lcard-sm p-4">
+              <div class="flex items-start justify-between mb-2">
+                <div>
+                  <div class="text-gray-800 text-sm font-semibold">Weekly Standup</div>
+                  <div class="text-gray-400 text-xs">8 responses · Apr 21</div>
+                </div>
+                <div class="flex gap-1">
+                  <span style="color:#f59e0b;">★★★</span><span style="color:#d1d5db;">★★</span>
+                  <span class="text-gray-700 text-xs font-bold ml-1">3.1</span>
+                </div>
+              </div>
+              <div class="flex gap-4 text-xs text-gray-500">
+                <span class="text-orange-500 font-medium">50% worth it</span>
+                <span>·</span><span>Ran 12 min over</span>
+              </div>
+              <div class="mt-3">
+                <div style="background:#fff7ed;border-left:3px solid #f97316;padding:6px 10px;border-radius:0 6px 6px 0;font-size:12px;color:#374151;">"Too long, should be async updates"</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Request form preview -->
+        <div class="space-y-4">
+          <div class="lcard p-5">
+            <div class="text-gray-800 font-semibold text-sm mb-3">Feedback Form Preview</div>
+            <div class="text-gray-400 text-xs mb-4">This is what attendees see after a meeting</div>
+            <div class="space-y-3">
+              <div>
+                <div class="text-gray-700 text-xs font-semibold mb-1">Overall rating</div>
+                <div class="flex gap-1 text-xl" style="color:#f59e0b;">★★★★<span style="color:#d1d5db;">★</span></div>
+              </div>
+              <div>
+                <div class="text-gray-700 text-xs font-semibold mb-1">Was this meeting worth your time?</div>
+                <div class="flex gap-2">
+                  <button style="background:#f0fdf4;border:1.5px solid #22c55e;border-radius:6px;padding:4px 12px;font-size:11px;color:#16a34a;font-weight:600;cursor:pointer;">Yes</button>
+                  <button style="background:#f1f5f9;border:1.5px solid #e2e8f0;border-radius:6px;padding:4px 12px;font-size:11px;color:#64748b;cursor:pointer;">No</button>
+                </div>
+              </div>
+              <div>
+                <div class="text-gray-700 text-xs font-semibold mb-1">What went well?</div>
+                <div style="background:#f8f9fc;border:1px solid #e4e6ef;border-radius:6px;padding:8px;font-size:11px;color:#94a3b8;min-height:40px;">Good agenda, stayed on topic…</div>
+              </div>
+              <div>
+                <div class="text-gray-700 text-xs font-semibold mb-1">What could improve?</div>
+                <div style="background:#f8f9fc;border:1px solid #e4e6ef;border-radius:6px;padding:8px;font-size:11px;color:#94a3b8;min-height:40px;">Could be 15 min shorter…</div>
+              </div>
+            </div>
+            <div style="margin-top:14px;background:linear-gradient(135deg,#f5f0ff,#ede9ff);border-radius:8px;padding:10px;font-size:11px;color:#7c3aed;text-align:center;">
+              ✦ Sent automatically after each meeting
+            </div>
+          </div>
+
+          <div class="lcard p-4">
+            <div class="text-gray-800 text-xs font-semibold mb-2">AI Insight</div>
+            <div class="text-gray-500 text-xs leading-relaxed">Meetings rated below 3.5 correlate with no shared agenda. Teams that use Meeting Manager score 1.2× higher on average.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /#app -->
+
+  <script>
+    const API = 'http://localhost:3001';
+    let currentUser   = null;
+    let currentAnalysis = null;   // full API response from /api/analysis
+    let currentForm   = {};       // title, topic, goal, duration, datetime, location, attendeeIds
+    let selectedGoal  = null;
+    let selectedAttendeeIds = [];
+    let allTeamMembers = [];      // includes current user (for display)
+    let teamMembers   = [];       // excludes current user (from /api/team)
+    const AVATAR_COLORS = ['#3b1f6e','#0e7490','#92400e','#14532d','#1e3a5f','#7c3aed','#b45309','#0f766e'];
+
+    /* ─── Token helpers ─── */
+    const getToken  = () => localStorage.getItem('mm_token');
+    const setToken  = t  => localStorage.setItem('mm_token', t);
+    const clearToken = () => localStorage.removeItem('mm_token');
+
+    /* ─── API wrapper ─── */
+    async function api(method, path, body) {
+      const res = await fetch(API + path, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(getToken() ? { Authorization: 'Bearer ' + getToken() } : {})
+        },
+        body: body ? JSON.stringify(body) : undefined
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Request failed');
+      return data;
+    }
+
+    /* ─── Helpers ─── */
+    function initials(name) {
+      return (name || '?').split(' ').slice(0,2).map(w => w[0]).join('').toUpperCase();
+    }
+    function avatarColor(id) {
+      return AVATAR_COLORS[id % AVATAR_COLORS.length];
+    }
+    function timeAgo(dateStr) {
+      const diff = Date.now() - new Date(dateStr).getTime();
+      const m = Math.floor(diff/60000);
+      if (m < 60) return m <= 1 ? 'just now' : `${m} min ago`;
+      const h = Math.floor(m/60);
+      if (h < 24) return `${h}h ago`;
+      return `${Math.floor(h/24)}d ago`;
+    }
+    function fmtTime(dtStr) {
+      return new Date(dtStr).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    }
+    function fmtDate(dtStr) {
+      return new Date(dtStr).toLocaleDateString([], {weekday:'long', month:'long', day:'numeric', year:'numeric'});
+    }
+    function fmtDateTime(dtStr) {
+      return new Date(dtStr).toLocaleDateString([], {month:'short', day:'numeric', year:'numeric'}) +
+             ' at ' + new Date(dtStr).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    }
+
+    /* ─── Auth UI ─── */
+    function switchAuthTab(tab) {
+      const isLogin = tab === 'login';
+      document.getElementById('form-login').style.display    = isLogin ? 'block' : 'none';
+      document.getElementById('form-register').style.display = isLogin ? 'none' : 'block';
+      document.getElementById('tab-login').style.background    = isLogin ? '#7c3aed' : 'transparent';
+      document.getElementById('tab-login').style.color         = isLogin ? 'white' : '#64748b';
+      document.getElementById('tab-register').style.background = isLogin ? 'transparent' : '#7c3aed';
+      document.getElementById('tab-register').style.color      = isLogin ? '#64748b' : 'white';
+      showAuthError('');
+    }
+    function showAuthError(msg) {
+      const el = document.getElementById('auth-error');
+      el.style.display = msg ? 'block' : 'none';
+      el.textContent = msg;
+    }
+
+    async function doLogin() {
+      const email    = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      const btn      = document.getElementById('login-btn');
+      if (!email || !password) return showAuthError('Please fill in all fields.');
+      btn.textContent = 'Signing in...'; btn.disabled = true;
+      try {
+        const { user, token } = await api('POST', '/api/auth/login', { email, password });
+        setToken(token);
+        currentUser = { ...user, id: Number(user.id) };
+        await enterApp();
+      } catch(e) {
+        showAuthError(e.message);
+      } finally {
+        btn.textContent = 'Sign In →'; btn.disabled = false;
+      }
+    }
+
+    async function doRegister() {
+      const name     = document.getElementById('reg-name').value.trim();
+      const role     = document.getElementById('reg-role').value.trim() || 'Member';
+      const email    = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value;
+      const btn      = document.getElementById('reg-btn');
+      if (!name || !email || !password) return showAuthError('Please fill in all fields.');
+      if (password.length < 6) return showAuthError('Password must be at least 6 characters.');
+      btn.textContent = 'Creating account...'; btn.disabled = true;
+      try {
+        const { user, token } = await api('POST', '/api/auth/register', { name, email, password, role });
+        setToken(token);
+        currentUser = { ...user, id: Number(user.id) };
+        await enterApp();
+      } catch(e) {
+        showAuthError(e.message);
+      } finally {
+        btn.textContent = 'Create Account →'; btn.disabled = false;
+      }
+    }
+
+    function doLogout() {
+      clearToken();
+      currentUser = null;
+      document.getElementById('app').style.display = 'none';
+      const auth = document.getElementById('auth-screen');
+      auth.style.display = 'flex';
+      // clear fields
+      ['login-email','login-password','reg-name','reg-email','reg-password'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      switchAuthTab('login');
+    }
+
+    /* ─── App init ─── */
+    async function enterApp() {
+      // Update sidebar user
+      document.getElementById('user-name').textContent     = currentUser.name;
+      document.getElementById('user-email').textContent    = currentUser.email;
+      document.getElementById('user-initials').textContent = initials(currentUser.name);
+      document.getElementById('user-initials').style.background = avatarColor(currentUser.id);
+
+      // Hide auth, show app
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('app').style.display         = 'flex';
+
+      showScreen('dashboard');
+      loadDashboard();
+      loadTeam();
+    }
+
+    async function init() {
+      if (getToken()) {
+        try {
+          // verify token by calling a protected endpoint
+          const dash = await api('GET', '/api/dashboard');
+          // Decode user info from JWT payload
+          const payload = JSON.parse(atob(getToken().split('.')[1]));
+          currentUser = { id: Number(payload.id), name: payload.name, email: payload.email, role: payload.role || 'Member' };
+          await enterApp();
+          renderDashboard(dash);
+        } catch {
+          clearToken();
+          showAuthFlow();
+        }
+      } else {
+        showAuthFlow();
+      }
+    }
+
+    function showAuthFlow() {
+      document.getElementById('auth-screen').style.display = 'flex';
+    }
+
+    /* ─── Screen navigation ─── */
     function showScreen(name) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      document.getElementById('screen-' + name).classList.add('active');
-
-      // Update sidebar active state
+      const el = document.getElementById('screen-' + name);
+      if (el) el.classList.add('active');
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-      if (name === 'dashboard') {
-        document.getElementById('nav-dashboard').classList.add('active');
-      } else {
-        document.getElementById('nav-new').classList.add('active');
-      }
+      if (name === 'dashboard')  document.getElementById('nav-dashboard').classList.add('active');
+      else if (name === 'feedback') document.getElementById('nav-feedback').classList.add('active');
+      else document.getElementById('nav-new').classList.add('active');
+      document.getElementById('great-call-card').style.display = name === 'review' ? 'block' : 'none';
+      if (name === 'dashboard') loadDashboard();
+    }
 
-      // Show "Great call!" card only on review screen
-      const card = document.getElementById('great-call-card');
-      card.style.display = name === 'review' ? 'block' : 'none';
+    function showFeedbackForm() {
+      alert('Feedback request sent to all attendees! (Demo — full implementation coming soon)');
     }
 
     function selectGoal(btn, goal) {
@@ -1497,50 +1499,536 @@
       selectedGoal = goal;
     }
 
-    function runAnalysis() {
-      const about = document.getElementById('meeting-about').value.trim();
-      const topic = about || 'Review design mockups and collect team feedback';
-      document.getElementById('summary-topic').textContent = topic;
+    /* ─── Dashboard ─── */
+    async function loadDashboard() {
+      try {
+        const data = await api('GET', '/api/dashboard');
+        renderDashboard(data);
+      } catch(e) { console.error('Dashboard load failed', e); }
+    }
 
-      const goalLabels = {
-        decision: 'Make a decision',
-        problem: 'Solve a problem',
-        share: 'Share information',
-        brainstorm: 'Brainstorm ideas',
-        other: 'General discussion'
-      };
-      document.getElementById('summary-goal').textContent =
-        selectedGoal ? goalLabels[selectedGoal] : 'Gather feedback and align on final direction';
+    function renderDashboard(data) {
+      document.getElementById('dash-upcoming').textContent = data.upcomingMeetings ?? '—';
+      document.getElementById('dash-hours').textContent    = data.meetingHours ?? '—';
+      document.getElementById('dash-members').textContent  = data.teamMembers ?? '—';
+      document.getElementById('dash-room').textContent     = (data.roomUsagePct ?? 0) + '%';
+      document.getElementById('dash-room-bar').style.width = (data.roomUsagePct ?? 0) + '%';
 
-      // Fake loading animation
+      // Upcoming meetings
+      const mList = document.getElementById('dash-meetings-list');
+      const emojis = ['🎨','📋','🚀','💡','🤝','📊','💬'];
+      const bgColors = ['#ede9ff','#eff6ff','#dcfce7','#fff7ed','#fdf2f8','#f0fdf4','#fef9c3'];
+      if (!data.upcomingMeetings) {
+        mList.innerHTML = '<div class="text-gray-400 text-xs py-4 text-center">No upcoming meetings. Create one!</div>';
+      } else {
+        // fetch actual meetings
+        api('GET', '/api/meetings').then(meetings => {
+          if (!meetings.length) {
+            mList.innerHTML = '<div class="text-gray-400 text-xs py-4 text-center">No upcoming meetings.</div>';
+            return;
+          }
+          mList.innerHTML = meetings.slice(0,5).map((m, i) => `
+            <div class="meeting-row">
+              <div class="w-9 h-9 rounded-lg flex items-center justify-center text-sm" style="background:${bgColors[i%bgColors.length]};">${emojis[i%emojis.length]}</div>
+              <div class="flex-1">
+                <div class="text-gray-800 text-sm font-medium">${m.title}</div>
+                <div class="text-gray-400 text-xs">${fmtTime(m.datetime)}${m.location ? ' · ' + m.location : ''} · ${m.duration} min</div>
+              </div>
+              <span class="badge badge-purple">${m.goal}</span>
+            </div>`).join('');
+        }).catch(() => {});
+      }
+
+      // Today's schedule
+      const tList = document.getElementById('dash-today-list');
+      if (!data.todaysSchedule?.length) {
+        tList.innerHTML = '<div class="text-gray-400 text-xs text-center py-2">No meetings today.</div>';
+      } else {
+        tList.innerHTML = data.todaysSchedule.map(m => `
+          <div class="lcard-sm p-3">
+            <div class="text-xs text-gray-400 mb-1">${fmtTime(m.datetime)}</div>
+            <div class="text-sm text-gray-800 font-medium">${m.title}</div>
+            ${m.location ? `<div class="text-xs text-gray-400 mt-0.5">${m.location}</div>` : ''}
+          </div>`).join('');
+      }
+
+      // Recent activity
+      const aList = document.getElementById('dash-activity-list');
+      if (!data.recentActivity?.length) {
+        aList.innerHTML = '<div class="text-gray-400 text-xs text-center py-2">No activity yet.</div>';
+      } else {
+        aList.innerHTML = data.recentActivity.slice(0,5).map((a, i) => {
+          const color = avatarColor(i);
+          const init  = initials(a.user_name);
+          const action = a.action.replace('_', ' ');
+          return `
+            <div class="flex gap-3 items-start">
+              <div class="avatar w-8 h-8 text-xs" style="background:${color};color:white;">${init}</div>
+              <div>
+                <div class="text-sm text-gray-600"><span class="text-gray-900 font-semibold">${a.user_name}</span> ${action}</div>
+                <div class="text-gray-400 text-xs mt-0.5">${timeAgo(a.created_at)}</div>
+              </div>
+            </div>`;
+        }).join('');
+      }
+
+      // Dashboard date
+      const dateEl = document.querySelector('#screen-dashboard .light-topbar .text-gray-400');
+      if (dateEl) dateEl.textContent = fmtDate(new Date().toISOString());
+    }
+
+    /* ─── Team ─── */
+    async function loadTeam() {
+      try {
+        teamMembers   = await api('GET', '/api/team');   // excludes self
+        allTeamMembers = [currentUser, ...teamMembers];   // includes self first
+        renderTeamDash();
+        renderAttendeeSelector();
+      } catch(e) { console.error('Team load failed', e); }
+    }
+
+    function renderTeamDash() {
+      const all = allTeamMembers;
+      // Member avatars in stat card
+      const avatarEl = document.getElementById('dash-member-avatars');
+      if (avatarEl) {
+        avatarEl.innerHTML = all.slice(0,3).map((u, i) =>
+          `<div class="avatar w-6 h-6 text-xs" style="background:${avatarColor(i)};color:white;" title="${u.name}">${initials(u.name)}</div>`
+        ).join('') + (all.length > 3 ? `<div class="avatar w-6 h-6 text-xs" style="background:#e8eaf2;color:#94a3b8;">+${all.length - 3}</div>` : '');
+      }
+
+      // Team list in dashboard
+      const tList = document.getElementById('dash-team-list');
+      if (!tList) return;
+      if (!all.length) {
+        tList.innerHTML = '<div class="text-gray-400 text-xs text-center py-2">No team members yet.</div>';
+        return;
+      }
+      tList.innerHTML = all.slice(0,6).map((u, i) => `
+        <div class="flex items-center gap-3">
+          <div class="avatar w-8 h-8 text-xs flex-shrink-0" style="background:${avatarColor(i)};color:white;">${initials(u.name)}</div>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm text-gray-800 font-medium">${u.name}${u.id === currentUser?.id ? ' <span style="color:#7c3aed;font-size:10px;">(you)</span>' : ''}</div>
+            <div class="text-xs text-gray-400 truncate">${u.email}</div>
+          </div>
+          ${u.role ? `<span style="background:#eef0f8;color:#64748b;font-size:10px;padding:2px 8px;border-radius:20px;white-space:nowrap;">${u.role}</span>` : ''}
+        </div>`).join('');
+    }
+
+    function renderAttendeeSelector() {
+      const list = document.getElementById('attendee-list');
+      if (!list) return;
+      selectedAttendeeIds = currentUser ? [Number(currentUser.id)] : [];
+
+      list.innerHTML = allTeamMembers.map((u, i) => {
+        const selected = selectedAttendeeIds.includes(Number(u.id));
+        const roleTag  = u.role ? `<span style="font-size:9px;background:rgba(124,58,237,0.1);color:#7c3aed;padding:1px 5px;border-radius:4px;margin-top:2px;">${u.role}</span>` : '';
+        return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;" onclick="toggleAttendee(this, ${Number(u.id)})">
+          <div class="avatar" data-uid="${Number(u.id)}"
+            style="background:${avatarColor(i)};color:white;outline:${selected ? '2px solid #7c3aed' : 'none'};outline-offset:2px;"
+            title="${u.name}">${initials(u.name)}</div>
+          <div style="font-size:9px;color:#64748b;text-align:center;max-width:44px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${u.name.split(' ')[0]}</div>
+          ${roleTag}
+        </div>`;
+      }).join('');
+    }
+
+    function toggleAttendee(wrapper, uid) {
+      uid = Number(uid);
+      if (uid === Number(currentUser?.id)) return; // can't deselect self
+      const idx    = selectedAttendeeIds.indexOf(uid);
+      const avatar = wrapper.querySelector('.avatar');
+      if (idx === -1) {
+        selectedAttendeeIds.push(uid);
+        avatar.style.outline = '2px solid #7c3aed';
+      } else {
+        selectedAttendeeIds.splice(idx, 1);
+        avatar.style.outline = 'none';
+      }
+    }
+
+    /* ─── Analysis ─── */
+    async function runAnalysis() {
+      const title    = document.getElementById('meeting-title').value.trim();
+      const topic    = document.getElementById('meeting-about').value.trim();
+      const goal     = selectedGoal;
+      const duration = parseInt(document.getElementById('duration').value);
+      const dtVal    = document.getElementById('meeting-time').value;
+      const location = document.getElementById('meeting-location').value.trim();
+
+      if (!title)    return alert('Please enter a meeting title.');
+      if (!topic)    return alert('Please describe what the meeting is about.');
+      if (!goal)     return alert('Please select a meeting goal.');
+      if (!duration) return alert('Please select a duration.');
+      if (!dtVal)    return alert('Please pick a date and time.');
+
+      const datetime = new Date(dtVal).toISOString();
+      if (new Date(datetime) <= new Date()) return alert('Meeting time must be in the future.');
+
+      // Store form state
+      currentForm = { title, topic, goal, duration, datetime, location, attendeeIds: [...selectedAttendeeIds] };
+
       const btn = event.target;
       btn.textContent = 'Analysing...';
       btn.disabled = true;
-      setTimeout(() => {
+
+      try {
+        const data = await api('POST', '/api/analysis', {
+          topic, goal, duration,
+          attendeeIds: currentForm.attendeeIds.length ? currentForm.attendeeIds : [Number(currentUser.id)]
+        });
+        currentAnalysis = data;
+
+        // Populate summary
+        const goalLabels = { decision:'Make a decision', problem:'Solve a problem', share:'Share information', brainstorm:'Brainstorm ideas', other:'General discussion' };
+        document.getElementById('summary-topic').textContent    = topic;
+        document.getElementById('summary-goal').textContent     = goalLabels[goal] || goal;
+        document.getElementById('summary-datetime').textContent = fmtDateTime(datetime);
+        document.getElementById('summary-location').textContent = location || 'Not specified';
+        document.getElementById('summary-attendees').innerHTML  = currentForm.attendeeIds.map((id, i) => {
+          const u = allTeamMembers.find(m => Number(m.id) === Number(id));
+          return u ? `<div class="avatar w-7 h-7 text-xs" style="background:${avatarColor(i)};color:white;" title="${u.name}">${initials(u.name)}</div>` : '';
+        }).join('');
+
+        // Score ring
+        const score  = data.score;
+        const offset = Math.round(251 * (1 - score / 100));
+        document.getElementById('score-value').textContent = score;
+        document.getElementById('score-ring-fill').setAttribute('stroke-dashoffset', offset);
+        const tier = scoreTier(score);
+        document.getElementById('score-tier').textContent         = tier.label;
+        document.getElementById('score-ring-fill').setAttribute('stroke', tier.color);
+        document.getElementById('score-tip-title').textContent    = tier.tipTitle;
+        document.getElementById('score-tip-title').style.color    = tier.color;
+        document.getElementById('score-tip-body').textContent     = tier.tipBody;
+
+        // Sub-scores (each out of 25)
+        setSubScore('focus',   data.focusScore,          25, '#7c3aed');
+        setSubScore('collab',  data.collaborationScore,  25, '#3b82f6');
+        setSubScore('time',    data.timeScore,            25, '#059669');
+        setSubScore('balance', data.balanceScore,         25, '#d97706');
+
+        // Key topics
+        document.getElementById('key-topics-list').innerHTML =
+          (data.keyTopics || []).map((t, i) => `
+            <div class="flex items-center gap-3">
+              <div class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold" style="background:#ede9ff;color:#7c3aed;">${i+1}</div>
+              <div class="text-sm text-gray-700">${t}</div>
+            </div>`).join('') || '<div class="text-gray-400 text-xs">No key topics identified.</div>';
+
+        // Factors (backend uses f.impact field)
+        document.getElementById('factors-list').innerHTML =
+          (data.factors || []).map(f => {
+            const impact = f.impact || f.type || 'info';
+            const icon   = impact === 'positive' ? '✓' : impact === 'negative' ? '⚠' : 'ℹ';
+            const color  = impact === 'positive' ? '#22c55e' : impact === 'negative' ? '#f97316' : '#3b82f6';
+            return `<div class="flex gap-2 items-start">
+              <span style="color:${color};font-size:13px;margin-top:2px;flex-shrink:0;">${icon}</span>
+              <div>
+                <div class="text-xs text-gray-800 font-semibold">${f.title}</div>
+                <div class="text-xs text-gray-500">${f.description}</div>
+              </div>
+            </div>`;
+          }).join('') || '<div class="text-gray-400 text-xs">—</div>';
+
+        renderRecommendations(data);
+        showScreen('analysis');
+      } catch(e) {
+        alert('Analysis failed: ' + e.message);
+      } finally {
         btn.textContent = 'Analyse Meeting →';
         btn.disabled = false;
-        showScreen('analysis');
-      }, 1200);
+      }
     }
 
+    function setSubScore(prefix, value, max, color) {
+      document.getElementById(`${prefix}-score`).textContent = value;
+      const pct = Math.round((value / max) * 100);
+      const bar = document.getElementById(`${prefix}-bar`);
+      bar.style.width = pct + '%';
+      if (color) bar.style.background = `linear-gradient(90deg, ${color}, ${color}99)`;
+    }
+
+    function scoreTier(score) {
+      if (score >= 80) return { label:'High', color:'#22c55e',  tipTitle:'Ready to run', tipBody:'This meeting is well-structured and worth having.' };
+      if (score >= 60) return { label:'Medium-High', color:'#3b82f6', tipTitle:'Minor tweaks recommended', tipBody:'This meeting has value but could be improved slightly.' };
+      if (score >= 40) return { label:'Medium', color:'#f59e0b', tipTitle:'Consider shortening', tipBody:'This meeting has value, but can be done faster and more focused.' };
+      return { label:'Low', color:'#ef4444', tipTitle:'Reconsider this meeting', tipBody:'This may not need to be a meeting at all.' };
+    }
+
+    const REC_ICONS  = { run_as_planned:'✅', shorten:'⏱', async:'🔄', cancel:'🚫', email:'✉' };
+    const REC_TITLES = { run_as_planned:'Run as planned', shorten:'Shorten this meeting', async:'Make it async', cancel:'Cancel this meeting', email:'Send as email instead' };
+
+    function renderRecommendations(data) {
+      const recs    = data.recommendations || [];
+      const agenda  = data.proposedAgenda  || [];
+      const primary = recs.find(r => r.isPrimary) || recs[0];
+      const others  = recs.filter(r => !r.isPrimary);
+
+      // Primary
+      document.getElementById('rec-primary').innerHTML = primary ? `
+        <div class="rec-option recommended mb-4">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-3">
+              <span class="text-2xl">${REC_ICONS[primary.type] || '✦'}</span>
+              <div>
+                <div class="text-gray-900 font-semibold">${REC_TITLES[primary.type] || primary.type}</div>
+                <div class="text-gray-500 text-xs mt-0.5">Recommended${primary.proposedDuration ? ' · ' + primary.proposedDuration + ' min' : ''}</div>
+              </div>
+            </div>
+            <span class="badge badge-purple">Score ${data.score}/100</span>
+          </div>
+          <div class="lcard-sm p-3 mb-3">
+            <div class="text-gray-800 text-xs font-semibold mb-1">Why this option?</div>
+            <div class="text-xs text-gray-600">${primary.reasoning || '—'}</div>
+          </div>
+          <button class="btn-primary w-full py-2 text-sm" onclick="chooseRec('primary')">Use this recommendation →</button>
+        </div>` : '';
+
+      // Others
+      document.getElementById('rec-others').innerHTML = others.map(r => `
+        <div class="rec-option">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xl">${REC_ICONS[r.type] || '✦'}</span>
+            <div class="text-gray-800 text-sm font-semibold">${REC_TITLES[r.type] || r.type}</div>
+          </div>
+          ${r.proposedDuration ? `<div class="badge badge-blue mb-2">${r.proposedDuration} min</div>` : ''}
+          <div class="text-xs text-gray-500 mb-3">${r.reasoning || ''}</div>
+          <button class="btn-secondary w-full py-2 text-xs" onclick="chooseRec('${r.type}')">Choose this</button>
+        </div>`).join('');
+
+      // Agenda sidebar
+      const agendaDots = ['bg-purple-500','bg-blue-500','bg-green-500','bg-orange-500','bg-pink-500'];
+      document.getElementById('agenda-meta').textContent =
+        (primary?.proposedDuration ? primary.proposedDuration + ' min' : '') +
+        (selectedAttendeeIds.length ? ' · ' + selectedAttendeeIds.length + ' attendees' : '');
+
+      document.getElementById('agenda-items-list').innerHTML = agenda.map((item, i) => {
+        const isLast = i === agenda.length - 1;
+        return `<div class="agenda-item">
+          <div class="flex flex-col items-center">
+            <div class="agenda-dot ${agendaDots[i % agendaDots.length]}"></div>
+            ${!isLast ? `<div class="agenda-line flex-1 mt-1" style="height:36px;"></div>` : ''}
+          </div>
+          <div class="${!isLast ? 'pb-4' : ''}">
+            <div class="text-gray-800 text-xs font-medium">${item.title}</div>
+            <div class="text-gray-400 text-xs">${item.duration} min</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function chooseRec(type) {
+      renderReview(type);
+      showScreen('review');
+    }
+
+    /* ─── Review page ─── */
+    function renderReview(chosenType) {
+      if (!currentAnalysis) return;
+      const recs    = currentAnalysis.recommendations || [];
+      const agenda  = currentAnalysis.proposedAgenda  || [];
+      const primary = recs.find(r => r.isPrimary) || recs[0];
+      const chosen  = recs.find(r => r.type === chosenType) || primary;
+
+      const recTitle     = REC_TITLES[chosen?.type] || chosen?.type || '—';
+      const recIcon      = REC_ICONS[chosen?.type]  || '📅';
+      const finalDur     = chosen?.proposedDuration || currentForm.duration;
+      const originalDur  = currentForm.duration;
+      const saved        = originalDur - finalDur;
+
+      // Header badge & plan card
+      document.getElementById('review-rec-badge').textContent  = recTitle.toUpperCase();
+      document.getElementById('review-rec-icon').textContent   = recIcon;
+      document.getElementById('review-rec-title').textContent  = recTitle;
+      document.getElementById('review-rec-reasoning').textContent = chosen?.reasoning || '—';
+      document.getElementById('review-score-badge').textContent = `Value Score: ${currentAnalysis.score}/100`;
+      document.getElementById('review-duration').textContent   = finalDur + ' minutes';
+      document.getElementById('review-saved').textContent      = saved > 0 ? saved + ' minutes' : 'None';
+      document.getElementById('review-when').textContent       = fmtDateTime(currentForm.datetime);
+      document.getElementById('review-where').textContent      = currentForm.location || 'Not specified';
+
+      // Attendees
+      document.getElementById('review-attendees').innerHTML = currentForm.attendeeIds.map((id, i) => {
+        const u = allTeamMembers.find(m => Number(m.id) === Number(id));
+        return u ? `<div class="avatar w-6 h-6 text-xs" style="background:${avatarColor(i)};color:white;" title="${u.name}">${initials(u.name)}</div>` : '';
+      }).join('');
+
+      // Agenda
+      const agendaColors = [
+        {dot:'#7c3aed',bg:'#f0ebff',fg:'#7c3aed'},
+        {dot:'#3b82f6',bg:'#eff6ff',fg:'#2563eb'},
+        {dot:'#059669',bg:'#dcfce7',fg:'#16a34a'},
+        {dot:'#f59e0b',bg:'#fff7ed',fg:'#ea580c'},
+        {dot:'#94a3b8',bg:'#f1f5f9',fg:'#94a3b8'},
+      ];
+      document.getElementById('review-agenda-label').textContent = `(${finalDur} min)`;
+      document.getElementById('review-agenda-list').innerHTML = agenda.map((item, i) => {
+        const c = agendaColors[i % agendaColors.length];
+        const isLast = i === agenda.length - 1;
+        return `<div style="display:flex;gap:12px;${!isLast ? 'padding-bottom:16px;' : ''}">
+          <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
+            <div style="width:10px;height:10px;border-radius:50%;background:${c.dot};margin-top:3px;flex-shrink:0;"></div>
+            ${!isLast ? `<div style="width:2px;flex:1;background:#e8eaf2;margin-top:3px;"></div>` : ''}
+          </div>
+          <div style="flex:1;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div class="text-gray-800 text-xs font-semibold">${item.title}</div>
+              <span style="background:${c.bg};color:${c.fg};font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0;">${item.duration} min</span>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+
+      // What's different bullets
+      const diffs = chosen?.type === 'run_as_planned'
+        ? ['Meeting goal is clear and focused','Attendees are well-matched to the topic','Duration is appropriate for the complexity','No changes needed — run as planned']
+        : chosen?.type === 'shorten'
+        ? ['Removed low-priority agenda items','Tightened time boxes for each topic','Focused on core decision points','Async follow-up for remaining items']
+        : chosen?.type === 'async'
+        ? ['No synchronous meeting needed','Distribute via email or shared doc','Collect written responses from attendees','Saves everyone\'s calendar']
+        : ['Meeting cancelled — low value detected','Consider an email or async update instead','Frees up ' + originalDur + ' minutes for everyone','Revisit if the situation changes'];
+
+      document.getElementById('review-diff-list').innerHTML = diffs.map(d =>
+        `<div class="flex gap-2 items-start"><span style="color:#7c3aed;font-weight:bold;flex-shrink:0;">✓</span><div class="text-gray-600 text-xs">${d}</div></div>`
+      ).join('');
+
+      // Email box (async / cancel)
+      const emailBox = document.getElementById('review-email-box');
+      if (chosen?.type === 'async' || chosen?.type === 'cancel') {
+        emailBox.style.display = 'block';
+        const attendeeNames = currentForm.attendeeIds.map(id => {
+          const u = allTeamMembers.find(m => Number(m.id) === Number(id));
+          return u?.name || '';
+        }).filter(Boolean).join(', ');
+        document.getElementById('review-email-preview').textContent =
+          `To: ${attendeeNames} — Re: "${currentForm.title}" (${currentForm.goal} · ${originalDur} min)`;
+      } else {
+        emailBox.style.display = 'none';
+      }
+
+      // Impact sidebar
+      const impacts = [
+        { icon:'⏱', bg:'#fff7ed', val: saved > 0 ? saved + ' min saved' : finalDur + ' min', label:'Time per person' },
+        { icon:'👥', bg:'#eff6ff', val: currentForm.attendeeIds.length + ' attendees',          label:'Total participants' },
+        { icon:'⚡', bg:'#f0fdf4', val: currentAnalysis.score + '/100',                         label:'Meeting value score' },
+        { icon:'🎯', bg:'#fdf2f8', val: recTitle,                                               label:'Recommended action' },
+      ];
+      document.getElementById('review-impact-list').innerHTML = impacts.map(imp => `
+        <div style="background:#f8f9fc;border-radius:10px;padding:10px;display:flex;align-items:center;gap:10px;">
+          <div style="width:34px;height:34px;background:${imp.bg};border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">${imp.icon}</div>
+          <div><div class="text-gray-900 text-xs font-bold">${imp.val}</div><div class="text-gray-400 text-xs">${imp.label}</div></div>
+        </div>`).join('');
+
+      // Before/After
+      document.getElementById('review-before-dur').textContent   = originalDur + ' min';
+      document.getElementById('review-after-dur').textContent    = finalDur   + ' min';
+      document.getElementById('review-before-score').textContent = currentAnalysis.score + '/100';
+      document.getElementById('review-after-score').textContent  = chosen?.type === 'run_as_planned'
+        ? currentAnalysis.score + '/100' : Math.min(100, currentAnalysis.score + 15) + '/100';
+
+      // Pro tip
+      const tips = {
+        run_as_planned: 'Great structure — send the agenda to attendees 24h before.',
+        shorten:        'Shorter, focused meetings drive better participation and faster decisions.',
+        async:          'Async updates respect everyone\'s deep work time and time zones.',
+        cancel:         'Cancelling unnecessary meetings is one of the highest-value things you can do.'
+      };
+      document.getElementById('review-pro-tip').textContent = tips[chosen?.type] || tips.shorten;
+    }
+
+    /* ─── Confirm & save meeting ─── */
+    async function confirmMeeting() {
+      if (!currentForm.title) return alert('No meeting to save — please run the analysis first.');
+      const btn = document.getElementById('confirm-btn');
+      btn.textContent = 'Scheduling...'; btn.disabled = true;
+      try {
+        const recs    = currentAnalysis?.recommendations || [];
+        const primary = recs.find(r => r.isPrimary) || recs[0];
+        const finalDur = primary?.proposedDuration || currentForm.duration;
+
+        await api('POST', '/api/meetings', {
+          title:       currentForm.title,
+          description: currentForm.topic,
+          goal:        currentForm.goal,
+          duration:    finalDur,
+          datetime:    currentForm.datetime,
+          location:    currentForm.location || undefined,
+          attendeeIds: currentForm.attendeeIds.filter(id => Number(id) !== Number(currentUser.id))
+        });
+
+        // Reset form
+        ['meeting-title','meeting-about','meeting-location'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = '';
+        });
+        document.getElementById('meeting-time').value = '';
+        document.getElementById('duration').value = '';
+        document.querySelectorAll('.goal-btn').forEach(b => b.classList.remove('selected'));
+        selectedGoal = null;
+        selectedAttendeeIds = currentUser ? [Number(currentUser.id)] : [];
+        renderAttendeeSelector();
+        currentAnalysis = null;
+        currentForm = {};
+
+        showScreen('dashboard');
+      } catch(e) {
+        alert('Failed to schedule meeting: ' + e.message);
+      } finally {
+        btn.textContent = '📅 Confirm & Schedule Meeting →'; btn.disabled = false;
+      }
+    }
+
+    /* ─── Email draft ─── */
+    function buildEmailText() {
+      if (!currentForm.title) return '';
+      const toEmails = currentForm.attendeeIds.map(id => {
+        const u = allTeamMembers.find(m => Number(m.id) === Number(id));
+        return u?.email || u?.name || '';
+      }).filter(Boolean).join(', ');
+      const goalLabels = { decision:'make a decision', problem:'solve a problem', share:'share an update', brainstorm:'brainstorm ideas', other:'discuss' };
+      const agenda = (currentAnalysis?.proposedAgenda || []).map((a,i) => `  ${i+1}. ${a.title} (${a.duration} min)`).join('\n');
+      return `To: ${toEmails}\nSubject: ${currentForm.title}\n\nHi team,\n\nInstead of a ${currentForm.duration}-minute meeting, I'd like to ${goalLabels[currentForm.goal] || 'discuss'} the following asynchronously:\n\n"${currentForm.topic}"\n\n${agenda ? `Suggested discussion points:\n${agenda}\n\n` : ''}Please share your thoughts by replying to this email by [DATE].\n\nThanks,\n${currentUser?.name}`;
+    }
+
+    function openEmailDraft() {
+      const text = buildEmailText();
+      document.getElementById('email-draft-text').value = text;
+      document.getElementById('email-draft-modal').style.display = 'flex';
+    }
+
+    function closeEmailModal() {
+      document.getElementById('email-draft-modal').style.display = 'none';
+    }
+
+    function copyEmailDraft() {
+      const ta = document.getElementById('email-draft-text');
+      ta.select();
+      document.execCommand('copy');
+      const btn = document.getElementById('copy-email-btn');
+      btn.textContent = '✓ Copied!';
+      setTimeout(() => btn.textContent = 'Copy to clipboard', 1800);
+    }
+
+    /* ─── Score modal ─── */
     function openScoreModal() {
-      const modal = document.getElementById('score-modal');
-      modal.style.display = 'flex';
+      document.getElementById('score-modal').style.display = 'flex';
       document.body.style.overflow = 'hidden';
     }
-
     function closeScoreModal(event) {
       if (event && event.target !== document.getElementById('score-modal')) return;
       document.getElementById('score-modal').style.display = 'none';
       document.body.style.overflow = '';
     }
-
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') {
         document.getElementById('score-modal').style.display = 'none';
         document.body.style.overflow = '';
       }
     });
+
+    /* ─── Boot ─── */
+    init();
   </script>
 </body>
 </html>
