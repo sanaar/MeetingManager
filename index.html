@@ -1,0 +1,1546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Meeting Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+    body { background: #0b0d18; color: #e2e8f0; margin: 0; }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #2d3150; border-radius: 4px; }
+
+    /* ── SIDEBAR (always dark) ── */
+    .sidebar { background: #0f1221; border-right: 1px solid #1e2240; }
+
+    /* ── DARK theme (dashboard) ── */
+    .card { background: #141728; border: 1px solid #1e2240; border-radius: 12px; }
+    .card-sm { background: #1a1f35; border: 1px solid #252b47; border-radius: 10px; }
+    .stat-card { background: #141728; border: 1px solid #1e2240; border-radius: 12px; padding: 18px; }
+    .meeting-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #1e2240; }
+    .meeting-row:last-child { border-bottom: none; }
+    .availability-bar { height: 8px; border-radius: 4px; background: #1e2240; overflow: hidden; flex: 1; }
+
+    /* ── LIGHT ZONE (analysis screens main content) ── */
+    .light-zone { background: #f5f6fa; color: #1e293b; }
+    .light-zone .light-topbar { background: #ffffff; border-bottom: 1px solid #e4e6ef; }
+
+    .light-zone .lcard {
+      background: #ffffff; border: 1px solid #e4e6ef;
+      border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    .light-zone .lcard-sm {
+      background: #f8f9fc; border: 1px solid #e8eaf2;
+      border-radius: 10px;
+    }
+    .light-zone .ltip-card {
+      background: #f0f1f8; border: 1px solid #e0e2f0;
+      border-radius: 10px; padding: 14px; margin-bottom: 10px;
+    }
+
+    /* light inputs */
+    .light-zone input, .light-zone textarea, .light-zone select {
+      background: #ffffff; border: 1px solid #d8dae8; border-radius: 8px;
+      color: #1e293b; padding: 10px 14px; width: 100%; font-size: 14px;
+      outline: none; transition: border-color 0.2s;
+    }
+    .light-zone input:focus, .light-zone textarea:focus { border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,0.08); }
+    .light-zone input::placeholder, .light-zone textarea::placeholder { color: #a0aab8; }
+
+    /* light goal buttons */
+    .light-zone .goal-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      padding: 14px 12px; border-radius: 10px; cursor: pointer;
+      border: 1.5px solid #e0e2f0; background: #ffffff;
+      font-size: 12px; font-weight: 500; color: #64748b;
+      transition: all 0.2s; text-align: center; min-width: 90px;
+    }
+    .light-zone .goal-btn:hover { border-color: #7c3aed; color: #7c3aed; background: #f5f0ff; }
+    .light-zone .goal-btn.selected { border-color: #7c3aed; color: #7c3aed; background: #f0ebff; }
+
+    /* light secondary button */
+    .light-zone .btn-secondary {
+      background: #ffffff; color: #64748b; border-radius: 8px;
+      padding: 10px 20px; font-weight: 500; cursor: pointer;
+      border: 1.5px solid #d8dae8; transition: all 0.2s; font-size: 14px;
+    }
+    .light-zone .btn-secondary:hover { background: #f5f6fa; color: #1e293b; border-color: #b0b4cc; }
+
+    /* light tags */
+    .light-zone .tag { background: #eef0f8; border-radius: 6px; padding: 4px 10px; font-size: 12px; color: #64748b; border: 1px solid #e0e2f0; }
+
+    /* light progress */
+    .light-zone .progress-bar { height: 6px; border-radius: 3px; background: #e8eaf2; overflow: hidden; }
+
+    /* light stat-card */
+    .light-zone .stat-card { background: #ffffff; border: 1px solid #e4e6ef; border-radius: 12px; padding: 18px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+
+    /* light meeting-row */
+    .light-zone .meeting-row { border-bottom-color: #e8eaf2; }
+
+    /* light availability bar */
+    .light-zone .availability-bar { background: #eef0f8; }
+
+    /* light rec-option */
+    .light-zone .rec-option {
+      background: #ffffff; border: 1.5px solid #e4e6ef;
+      border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .light-zone .rec-option:hover { border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,0.07); }
+    .light-zone .rec-option.recommended { border-color: #7c3aed; background: #faf8ff; }
+
+    /* light card-sm inside lcard */
+    .light-zone .inner-sm { background: #f5f6fa; border: 1px solid #e4e6ef; border-radius: 8px; padding: 12px; }
+
+    /* light score sidebar */
+    .light-zone .score-sidebar { background: #ffffff; border: 1px solid #e4e6ef; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+
+    /* light ai bubble */
+    .light-zone .ai-bubble {
+      background: #ffffff; border: 1px solid #e4e6ef;
+      border-radius: 12px 12px 12px 0;
+      padding: 12px 14px; font-size: 13px; color: #64748b;
+      max-width: 220px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    /* light step pending */
+    .light-zone .step-pending { background: #eef0f8; color: #94a3b8; border: 1px solid #d8dae8; }
+    .light-zone .step-line { background: #d8dae8; }
+
+    /* light badges */
+    .light-zone .badge-purple { background: #ede9ff; color: #7c3aed; }
+    .light-zone .badge-green  { background: #dcfce7; color: #16a34a; }
+    .light-zone .badge-orange { background: #fff7ed; color: #ea580c; }
+    .light-zone .badge-blue   { background: #eff6ff; color: #2563eb; }
+
+    /* section headings in light zone */
+    .light-zone h2 { color: #0f172a; }
+    .light-zone .sub-text { color: #64748b; }
+    .light-zone .label-text { color: #374151; }
+    .light-zone .muted-text { color: #94a3b8; }
+    .light-zone .factor-title { color: #1e293b; }
+
+    /* ── SHARED ── */
+    .accent { color: #a78bfa; }
+    .accent-bg { background: #6d28d9; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #7c3aed, #5b21b6);
+      color: white; border-radius: 8px; padding: 10px 20px;
+      font-weight: 600; cursor: pointer; border: none;
+      transition: all 0.2s; font-size: 14px;
+    }
+    .btn-primary:hover { background: linear-gradient(135deg, #8b5cf6, #6d28d9); transform: translateY(-1px); }
+
+    /* dark secondary (dashboard) */
+    .btn-secondary {
+      background: #1e2240; color: #a0aec0; border-radius: 8px;
+      padding: 10px 20px; font-weight: 500; cursor: pointer;
+      border: 1px solid #2d3150; transition: all 0.2s; font-size: 14px;
+    }
+    .btn-secondary:hover { background: #252b47; color: #e2e8f0; }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+      border-radius: 8px; cursor: pointer; color: #64748b;
+      font-size: 14px; font-weight: 500; transition: all 0.15s;
+    }
+    .nav-item:hover { background: #1a1f35; color: #a78bfa; }
+    .nav-item.active { background: rgba(109,40,217,0.2); color: #a78bfa; }
+
+    .step-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+    .step-circle {
+      width: 24px; height: 24px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; flex-shrink: 0;
+    }
+    .step-active { background: #7c3aed; color: white; }
+    .step-done { background: #059669; color: white; }
+    .step-pending { background: #1e2240; color: #64748b; border: 1px solid #2d3150; }
+    .step-line { width: 32px; height: 1px; background: #1e2240; }
+    .step-line-done { background: #7c3aed; }
+
+    /* dark goal-btn (fallback) */
+    .goal-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      padding: 14px 12px; border-radius: 10px; cursor: pointer;
+      border: 1px solid #1e2240; background: #1a1f35;
+      font-size: 12px; font-weight: 500; color: #94a3b8;
+      transition: all 0.2s; text-align: center; min-width: 90px;
+    }
+
+    .avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; flex-shrink: 0;
+    }
+
+    .score-ring { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+    .score-ring svg { transform: rotate(-90deg); }
+    .score-label { position: absolute; text-align: center; }
+
+    .tip-card { background: #1a1f35; border: 1px solid #252b47; border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+
+    input, textarea, select {
+      background: #1a1f35; border: 1px solid #252b47; border-radius: 8px;
+      color: #e2e8f0; padding: 10px 14px; width: 100%; font-size: 14px;
+      outline: none; transition: border-color 0.2s;
+    }
+    input:focus, textarea:focus { border-color: #7c3aed; }
+    input::placeholder, textarea::placeholder { color: #475569; }
+
+    .agenda-item { display: flex; gap: 12px; padding: 10px 0; }
+    .agenda-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+    .agenda-line { width: 2px; background: #e4e6ef; margin: 0 4px; flex-shrink: 0; }
+
+    .badge { border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 600; }
+    .badge-purple { background: rgba(109,40,217,0.2); color: #a78bfa; }
+    .badge-green { background: rgba(5,150,105,0.2); color: #34d399; }
+    .badge-orange { background: rgba(234,88,12,0.2); color: #fb923c; }
+    .badge-blue { background: rgba(37,99,235,0.2); color: #60a5fa; }
+
+    .screen { display: none; }
+    .screen.active { display: flex; }
+
+    .progress-bar { height: 6px; border-radius: 3px; background: #1e2240; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #7c3aed, #a78bfa); }
+
+    .tag { background: #1e2240; border-radius: 6px; padding: 4px 10px; font-size: 12px; color: #94a3b8; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.3s ease forwards; }
+
+    .notification-dot { width: 7px; height: 7px; background: #7c3aed; border-radius: 50%; }
+
+    .ai-bubble {
+      background: linear-gradient(135deg, #1a1f35, #141728);
+      border: 1px solid #252b47; border-radius: 12px 12px 12px 0;
+      padding: 12px 14px; font-size: 13px; color: #94a3b8; max-width: 220px;
+    }
+  </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+  <!-- ===== SIDEBAR ===== -->
+  <div class="sidebar w-56 flex-shrink-0 flex flex-col py-4 px-3">
+    <!-- Logo -->
+    <div class="px-2 mb-5">
+      <div class="flex items-center gap-2 mb-0.5">
+        <div class="w-9 h-9 rounded-xl accent-bg flex items-center justify-center text-white text-base">🤖</div>
+        <div>
+          <div class="text-white font-extrabold text-sm leading-tight tracking-wide">MEETING</div>
+          <div class="text-white font-extrabold text-sm leading-tight tracking-wide">MANAGER</div>
+        </div>
+      </div>
+      <div class="text-gray-500 text-xs mt-1 pl-11">AI Meeting Assistant</div>
+    </div>
+
+    <!-- Nav -->
+    <div class="flex flex-col gap-0.5 flex-1">
+      <div class="nav-item" id="nav-new" onclick="showScreen('new-meeting')">
+        <span style="font-size:15px;">✦</span> New Meeting Analysis
+      </div>
+      <div class="nav-item" id="nav-dashboard" onclick="showScreen('dashboard')">
+        <span style="font-size:15px;">⊞</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="showScreen('dashboard')">
+        <span style="font-size:15px;">📅</span> Meetings
+      </div>
+      <div class="nav-item" onclick="showScreen('dashboard')">
+        <span style="font-size:15px;">🗓</span> Calendar
+      </div>
+      <div class="nav-item" onclick="showScreen('dashboard')">
+        <span style="font-size:15px;">📊</span> Insights
+      </div>
+      <div class="nav-item" onclick="showScreen('dashboard')">
+        <span style="font-size:15px;">💬</span> Feedback
+      </div>
+      <div class="nav-item" onclick="showScreen('dashboard')">
+        <span style="font-size:15px;">⚙</span> Settings
+      </div>
+    </div>
+
+    <!-- Great call card (shown on review screen) -->
+    <div id="great-call-card" style="display:none;background:linear-gradient(135deg,#4c1d95,#2e1065);border-radius:14px;padding:14px;margin-bottom:12px;text-align:center;">
+      <div style="font-size:36px;margin-bottom:6px;">🤖</div>
+      <div class="text-white font-bold text-sm mb-1">Great call!</div>
+      <div class="text-purple-200 text-xs leading-relaxed">You're saving 30 minutes and making this meeting more effective.</div>
+    </div>
+
+    <!-- User -->
+    <div class="flex items-center gap-2 px-2 pt-3 border-t border-gray-800">
+      <div class="avatar" style="background:#3b1f6e;color:white;">JC</div>
+      <div>
+        <div class="text-white text-xs font-semibold">Jane Cooper</div>
+        <div class="text-gray-500 text-xs">jane@hackathon.dev</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MAIN ===== -->
+  <div class="flex-1 overflow-hidden">
+
+    <!-- ============================================================ -->
+    <!-- SCREEN: DASHBOARD                                            -->
+    <!-- ============================================================ -->
+    <div id="screen-dashboard" class="screen active flex-col h-full overflow-y-auto light-zone">
+      <!-- Top bar -->
+      <div class="light-topbar flex items-center justify-between px-6 py-4">
+        <div>
+          <div class="text-gray-900 font-bold text-lg">Dashboard</div>
+          <div class="text-gray-400 text-xs">Friday, April 25, 2026</div>
+        </div>
+        <button class="btn-primary text-sm px-4 py-2" onclick="showScreen('new-meeting')">
+          + New Meeting Analysis
+        </button>
+      </div>
+
+      <div class="p-6 space-y-5 fade-in">
+        <!-- Stat Cards -->
+        <div class="grid grid-cols-4 gap-4">
+          <div class="stat-card">
+            <div class="text-gray-400 text-xs mb-1">Upcoming Meetings</div>
+            <div class="text-gray-900 text-3xl font-bold">7</div>
+            <div class="text-green-600 text-xs mt-1">↑ 2 this week</div>
+          </div>
+          <div class="stat-card">
+            <div class="text-gray-400 text-xs mb-1">Meeting Hours</div>
+            <div class="text-gray-900 text-3xl font-bold">24</div>
+            <div class="text-orange-500 text-xs mt-1">↓ 3h vs last week</div>
+          </div>
+          <div class="stat-card">
+            <div class="text-gray-400 text-xs mb-1">Team Members</div>
+            <div class="text-gray-900 text-3xl font-bold">12</div>
+            <div class="flex gap-1 mt-2">
+              <div class="avatar w-6 h-6 text-xs" style="background:#5b21b6;color:white;">JC</div>
+              <div class="avatar w-6 h-6 text-xs" style="background:#0e7490;color:white;">AT</div>
+              <div class="avatar w-6 h-6 text-xs" style="background:#92400e;color:white;">SM</div>
+              <div class="avatar w-6 h-6 text-xs" style="background:#e8eaf2;color:#94a3b8;">+9</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="text-gray-400 text-xs mb-1">Room Usage</div>
+            <div class="text-gray-900 text-3xl font-bold">68%</div>
+            <div class="progress-bar mt-2">
+              <div class="progress-fill" style="width:68%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="grid grid-cols-3 gap-5">
+          <!-- Upcoming Meetings -->
+          <div class="col-span-2 lcard p-5">
+            <div class="flex justify-between items-center mb-4">
+              <div class="text-gray-800 font-semibold">Upcoming Meetings</div>
+              <span class="text-gray-400 text-xs cursor-pointer hover:text-violet-600">View all →</span>
+            </div>
+
+            <div class="meeting-row">
+              <div class="w-9 h-9 rounded-lg flex items-center justify-center text-sm" style="background:#ede9ff;">🎨</div>
+              <div class="flex-1">
+                <div class="text-gray-800 text-sm font-medium">Google Design Sprint</div>
+                <div class="text-gray-400 text-xs">10:00 AM · Room A · 5 attendees</div>
+              </div>
+              <span class="badge badge-purple">Design</span>
+            </div>
+
+            <div class="meeting-row">
+              <div class="w-9 h-9 rounded-lg flex items-center justify-center text-sm" style="background:#eff6ff;">📋</div>
+              <div class="flex-1">
+                <div class="text-gray-800 text-sm font-medium">Team Strategy Review</div>
+                <div class="text-gray-400 text-xs">11:30 AM · Remote · 8 attendees</div>
+              </div>
+              <span class="badge badge-blue">Strategy</span>
+            </div>
+
+            <div class="meeting-row">
+              <div class="w-9 h-9 rounded-lg flex items-center justify-center text-sm" style="background:#dcfce7;">🚀</div>
+              <div class="flex-1">
+                <div class="text-gray-800 text-sm font-medium">Product Launch Planning</div>
+                <div class="text-gray-400 text-xs">2:00 PM · Room B · 6 attendees</div>
+              </div>
+              <span class="badge badge-green">Product</span>
+            </div>
+
+            <div class="meeting-row">
+              <div class="w-9 h-9 rounded-lg flex items-center justify-center text-sm" style="background:#fff7ed;">💡</div>
+              <div class="flex-1">
+                <div class="text-gray-800 text-sm font-medium">Quarterly OKR Alignment</div>
+                <div class="text-gray-400 text-xs">3:30 PM · Room C · 12 attendees</div>
+              </div>
+              <span class="badge badge-orange">Planning</span>
+            </div>
+
+            <div class="meeting-row">
+              <div class="w-9 h-9 rounded-lg flex items-center justify-center text-sm" style="background:#fdf2f8;">🤝</div>
+              <div class="flex-1">
+                <div class="text-gray-800 text-sm font-medium">Client Onboarding Call</div>
+                <div class="text-gray-400 text-xs">4:30 PM · Zoom · 4 attendees</div>
+              </div>
+              <span class="badge badge-purple">Client</span>
+            </div>
+          </div>
+
+          <!-- Today's Schedule -->
+          <div class="lcard p-5">
+            <div class="text-gray-800 font-semibold mb-4">Today's Schedule</div>
+            <div class="space-y-3">
+              <div class="lcard-sm p-3">
+                <div class="text-xs text-gray-400 mb-1">9:00 AM</div>
+                <div class="text-sm text-gray-800 font-medium">Morning Standup</div>
+                <div class="flex gap-1 mt-2">
+                  <div class="avatar w-5 h-5 text-xs" style="background:#5b21b6;color:white;">J</div>
+                  <div class="avatar w-5 h-5 text-xs" style="background:#0e7490;color:white;">A</div>
+                  <div class="avatar w-5 h-5 text-xs" style="background:#92400e;color:white;">S</div>
+                </div>
+              </div>
+              <div class="lcard-sm p-3 border-l-2 border-purple-500">
+                <div class="text-xs text-violet-600 font-semibold mb-1">10:00 AM · NOW</div>
+                <div class="text-sm text-gray-800 font-medium">Google Design Sprint</div>
+                <div class="flex gap-1 mt-2">
+                  <div class="avatar w-5 h-5 text-xs" style="background:#3b1f6e;color:white;">J</div>
+                  <div class="avatar w-5 h-5 text-xs" style="background:#1e3a5f;color:white;">T</div>
+                  <div class="avatar w-5 h-5 text-xs" style="background:#e8eaf2;color:#94a3b8;">+3</div>
+                </div>
+              </div>
+              <div class="lcard-sm p-3">
+                <div class="text-xs text-gray-400 mb-1">11:30 AM</div>
+                <div class="text-sm text-gray-800 font-medium">Team Strategy Review</div>
+              </div>
+              <div class="lcard-sm p-3">
+                <div class="text-xs text-gray-400 mb-1">2:00 PM</div>
+                <div class="text-sm text-gray-800 font-medium">Product Launch Planning</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Grid -->
+        <div class="grid grid-cols-2 gap-5">
+          <!-- Recent Activity -->
+          <div class="lcard p-5">
+            <div class="text-gray-800 font-semibold mb-4">Recent Activity</div>
+            <div class="space-y-3">
+              <div class="flex gap-3 items-start">
+                <div class="avatar w-8 h-8 text-xs" style="background:#3b1f6e;color:white;">JC</div>
+                <div>
+                  <div class="text-sm text-gray-600"><span class="text-gray-900 font-semibold">Jane Cooper</span> scheduled Design Sprint</div>
+                  <div class="text-gray-400 text-xs mt-0.5">2 hours ago</div>
+                </div>
+              </div>
+              <div class="flex gap-3 items-start">
+                <div class="avatar w-8 h-8 text-xs" style="background:#0e7490;color:white;">AT</div>
+                <div>
+                  <div class="text-sm text-gray-600"><span class="text-gray-900 font-semibold">Alex Turner</span> updated the agenda for Strategy Review</div>
+                  <div class="text-gray-400 text-xs mt-0.5">4 hours ago</div>
+                </div>
+              </div>
+              <div class="flex gap-3 items-start">
+                <div class="avatar w-8 h-8 text-xs" style="background:#92400e;color:white;">SM</div>
+                <div>
+                  <div class="text-sm text-gray-600"><span class="text-gray-900 font-semibold">Sarah Mills</span> cancelled Weekly Sync (replaced with email)</div>
+                  <div class="text-gray-400 text-xs mt-0.5">Yesterday</div>
+                </div>
+              </div>
+              <div class="flex gap-3 items-start">
+                <div class="avatar w-8 h-8 text-xs" style="background:#14532d;color:white;">MK</div>
+                <div>
+                  <div class="text-sm text-gray-600"><span class="text-gray-900 font-semibold">Mike Kim</span> used AI to shorten Q3 Review by 30 min</div>
+                  <div class="text-gray-400 text-xs mt-0.5">Yesterday</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Team Availability -->
+          <div class="lcard p-5">
+            <div class="text-gray-800 font-semibold mb-4">Team Availability</div>
+            <div class="space-y-3">
+              <div class="flex items-center gap-3">
+                <div class="avatar w-8 h-8 text-xs" style="background:#3b1f6e;color:white;">JC</div>
+                <div class="flex-1">
+                  <div class="flex justify-between text-xs text-gray-500 mb-1"><span>Jane Cooper</span><span class="text-green-600 font-medium">Available</span></div>
+                  <div class="availability-bar"><div style="width:30%;background:#16a34a;height:100%;border-radius:4px;"></div></div>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="avatar w-8 h-8 text-xs" style="background:#0e7490;color:white;">AT</div>
+                <div class="flex-1">
+                  <div class="flex justify-between text-xs text-gray-500 mb-1"><span>Alex Turner</span><span class="text-orange-500 font-medium">In meeting</span></div>
+                  <div class="availability-bar"><div style="width:80%;background:#ea580c;height:100%;border-radius:4px;"></div></div>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="avatar w-8 h-8 text-xs" style="background:#92400e;color:white;">SM</div>
+                <div class="flex-1">
+                  <div class="flex justify-between text-xs text-gray-500 mb-1"><span>Sarah Mills</span><span class="text-green-600 font-medium">Available</span></div>
+                  <div class="availability-bar"><div style="width:45%;background:#16a34a;height:100%;border-radius:4px;"></div></div>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="avatar w-8 h-8 text-xs" style="background:#14532d;color:white;">MK</div>
+                <div class="flex-1">
+                  <div class="flex justify-between text-xs text-gray-500 mb-1"><span>Mike Kim</span><span class="text-blue-600 font-medium">Focus time</span></div>
+                  <div class="availability-bar"><div style="width:60%;background:#2563eb;height:100%;border-radius:4px;"></div></div>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="avatar w-8 h-8 text-xs" style="background:#1e1b4b;color:white;">PR</div>
+                <div class="flex-1">
+                  <div class="flex justify-between text-xs text-gray-500 mb-1"><span>Priya Rao</span><span class="text-green-600 font-medium">Available</span></div>
+                  <div class="availability-bar"><div style="width:20%;background:#16a34a;height:100%;border-radius:4px;"></div></div>
+                </div>
+              </div>
+            </div>
+            <button class="btn-secondary w-full mt-4 text-xs py-2">Check Availability</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SCREEN: NEW MEETING — DESCRIBE                               -->
+    <!-- ============================================================ -->
+    <div id="screen-new-meeting" class="screen flex-col h-full overflow-y-auto light-zone">
+      <!-- Top bar -->
+      <div class="light-topbar flex items-center justify-between px-6 py-4">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg accent-bg flex items-center justify-center text-white text-sm">✦</div>
+          <div>
+            <div class="text-gray-900 font-bold text-sm">New Meeting Analysis</div>
+            <div class="text-gray-400 text-xs">AI Meeting Assistant</div>
+          </div>
+        </div>
+        <!-- Step Progress -->
+        <div class="flex items-center gap-2">
+          <div class="step-item"><div class="step-circle step-active">1</div><span class="text-gray-900 text-xs font-semibold">Describe</span></div>
+          <div class="step-line step-line-done"></div>
+          <div class="step-item"><div class="step-circle step-pending">2</div><span class="text-gray-400 text-xs">Analyse</span></div>
+          <div class="step-line"></div>
+          <div class="step-item"><div class="step-circle step-pending">3</div><span class="text-gray-400 text-xs">Recommendations</span></div>
+          <div class="step-line"></div>
+          <div class="step-item"><div class="step-circle step-pending">4</div><span class="text-gray-400 text-xs">Review</span></div>
+          <div class="step-line"></div>
+          <div class="text-gray-400 text-xs cursor-pointer hover:text-gray-600">How it works</div>
+        </div>
+      </div>
+
+      <div class="flex flex-1 p-6 gap-6 fade-in">
+        <!-- Form -->
+        <div class="flex-1 max-w-2xl">
+          <h2 class="text-2xl font-bold mb-1">Let's understand your meeting</h2>
+          <p class="text-gray-500 text-sm mb-6">Help me understand what you're planning so I can give you the best recommendations.</p>
+
+          <div class="space-y-5">
+            <!-- About -->
+            <div>
+              <label class="text-gray-700 text-sm font-medium block mb-2">What's the meeting about?</label>
+              <textarea rows="3" placeholder="e.g. Discuss product strategy, review designs, align on marketing messaging..." id="meeting-about"></textarea>
+            </div>
+
+            <!-- Goal -->
+            <div>
+              <label class="text-gray-700 text-sm font-medium block mb-3">What's the main goal of this meeting?</label>
+              <div class="flex flex-wrap gap-3" id="goal-buttons">
+                <button class="goal-btn" onclick="selectGoal(this, 'decision')">
+                  <span style="font-size:20px;">⚖️</span>Make a decision
+                </button>
+                <button class="goal-btn" onclick="selectGoal(this, 'problem')">
+                  <span style="font-size:20px;">🔧</span>Solve a problem
+                </button>
+                <button class="goal-btn" onclick="selectGoal(this, 'share')">
+                  <span style="font-size:20px;">📢</span>Share information
+                </button>
+                <button class="goal-btn" onclick="selectGoal(this, 'brainstorm')">
+                  <span style="font-size:20px;">💡</span>Brainstorm
+                </button>
+                <button class="goal-btn" onclick="selectGoal(this, 'other')">
+                  <span style="font-size:20px;">⋯</span>Other
+                </button>
+              </div>
+            </div>
+
+            <!-- Attendees -->
+            <div>
+              <label class="text-gray-700 text-sm font-medium block mb-2">Who needs to be there?</label>
+              <div class="flex items-center gap-2 flex-wrap" id="attendee-list">
+                <div class="avatar cursor-pointer" style="background:#3b1f6e;color:white;" title="Jane Cooper">JC</div>
+                <div class="avatar cursor-pointer" style="background:#0e7490;color:white;" title="Alex Turner">AT</div>
+                <div class="avatar cursor-pointer" style="background:#92400e;color:white;" title="Sarah Mills">SM</div>
+                <div class="avatar cursor-pointer" style="background:#14532d;color:white;" title="Mike Kim">MK</div>
+                <div class="avatar cursor-pointer" style="background:#f0f1f8; border: 1.5px dashed #b0b4cc; color:#94a3b8;" title="Add more">+</div>
+              </div>
+            </div>
+
+            <!-- Duration + Date -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-gray-700 text-sm font-medium block mb-2">How long do you need?</label>
+                <select id="duration">
+                  <option value="">Select duration</option>
+                  <option value="15">15 Minutes</option>
+                  <option value="30">30 Minutes</option>
+                  <option value="45">45 Minutes</option>
+                  <option selected value="60">60 Minutes</option>
+                  <option value="90">90 Minutes</option>
+                  <option value="120">2 Hours</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-gray-700 text-sm font-medium block mb-2">When?</label>
+                <input type="datetime-local" id="meeting-time" />
+              </div>
+            </div>
+
+            <!-- Context -->
+            <div>
+              <label class="text-gray-700 text-sm font-medium block mb-2">
+                Anything I should know? <span class="text-gray-400">(optional)</span>
+              </label>
+              <textarea rows="2" placeholder="Add any context, documents, or specific concerns..." id="meeting-context"></textarea>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex gap-3 mt-6">
+            <button class="btn-secondary" onclick="showScreen('dashboard')">Cancel</button>
+            <button class="btn-primary ml-auto" onclick="runAnalysis()">Analyse Meeting →</button>
+          </div>
+        </div>
+
+        <!-- Tips Sidebar -->
+        <div class="w-64 flex-shrink-0">
+          <div class="lcard p-4 mb-4">
+            <div class="text-gray-800 text-sm font-semibold mb-3">💡 Tips for better results</div>
+            <div class="ltip-card">
+              <div class="text-gray-800 text-xs font-semibold mb-1">Be specific</div>
+              <div class="text-gray-500 text-xs">The more details you provide, the more accurate and actionable the recommendations will be.</div>
+            </div>
+            <div class="ltip-card">
+              <div class="text-gray-800 text-xs font-semibold mb-1">Include the right people</div>
+              <div class="text-gray-500 text-xs">Add everyone who needs to contribute to the decision or action.</div>
+            </div>
+            <div class="ltip-card">
+              <div class="text-gray-800 text-xs font-semibold mb-1">Focus on the goal</div>
+              <div class="text-gray-500 text-xs">Clear goals help the AI give you more specific and useful recommendations.</div>
+            </div>
+          </div>
+
+          <!-- AI bubble -->
+          <div class="flex gap-2 items-end mt-4">
+            <div class="w-9 h-9 rounded-full accent-bg flex items-center justify-center text-white flex-shrink-0">✦</div>
+            <div class="ai-bubble">Teams save up to 1.5 hours/week by running better meetings.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SCREEN: ANALYSIS RESULTS                                     -->
+    <!-- ============================================================ -->
+    <div id="screen-analysis" class="screen flex-col h-full overflow-y-auto light-zone">
+      <!-- Top bar -->
+      <div class="light-topbar flex items-center justify-between px-6 py-4">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg accent-bg flex items-center justify-center text-white text-sm">✦</div>
+          <div>
+            <div class="text-gray-900 font-bold text-sm">New Meeting Analysis</div>
+            <div class="text-gray-400 text-xs">AI Meeting Assistant</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="step-item"><div class="step-circle step-done">✓</div><span class="text-gray-400 text-xs">Describe</span></div>
+          <div class="step-line step-line-done"></div>
+          <div class="step-item"><div class="step-circle step-active">2</div><span class="text-gray-900 text-xs font-semibold">Analyse</span></div>
+          <div class="step-line"></div>
+          <div class="step-item"><div class="step-circle step-pending">3</div><span class="text-gray-400 text-xs">Recommendations</span></div>
+          <div class="step-line"></div>
+          <div class="step-item"><div class="step-circle step-pending">4</div><span class="text-gray-400 text-xs">Review</span></div>
+          <div class="step-line"></div>
+          <div class="text-gray-400 text-xs cursor-pointer hover:text-gray-600">How it works</div>
+        </div>
+      </div>
+
+      <div class="flex flex-1 p-6 gap-6 fade-in">
+        <!-- Main Content -->
+        <div class="flex-1 max-w-2xl">
+          <h2 class="text-2xl font-bold mb-1">Here's what I found</h2>
+          <p class="text-gray-500 text-sm mb-6">Based on your input, I've analysed the purpose, attendees, and context of this meeting.</p>
+
+          <!-- Meeting Summary -->
+          <div class="lcard p-5 mb-4">
+            <div class="flex justify-between items-start mb-3">
+              <div class="text-gray-800 font-semibold text-sm">📋 Meeting Summary</div>
+              <button class="text-xs text-violet-600 hover:underline">✏ Edit details</button>
+            </div>
+            <div class="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <div class="text-gray-400 text-xs mb-0.5">Topic</div>
+                <div class="text-gray-800 text-xs" id="summary-topic">Review design mockups and collect team feedback</div>
+              </div>
+              <div>
+                <div class="text-gray-400 text-xs mb-0.5">Goal</div>
+                <div class="text-gray-800 text-xs" id="summary-goal">Gather feedback and align on final direction</div>
+              </div>
+              <div>
+                <div class="text-gray-400 text-xs mb-0.5">Date & Time</div>
+                <div class="text-gray-800 text-xs">May 05, 2026 at 10:00 AM</div>
+              </div>
+              <div>
+                <div class="text-gray-400 text-xs mb-0.5">Location</div>
+                <div class="text-gray-800 text-xs">Remote</div>
+              </div>
+              <div class="col-span-2">
+                <div class="text-gray-400 text-xs mb-1">Attendees</div>
+                <div class="flex gap-2">
+                  <div class="avatar w-7 h-7 text-xs" style="background:#3b1f6e;color:white;" title="Jane Cooper">JC</div>
+                  <div class="avatar w-7 h-7 text-xs" style="background:#0e7490;color:white;" title="Alex Turner">AT</div>
+                  <div class="avatar w-7 h-7 text-xs" style="background:#92400e;color:white;" title="Sarah Mills">SM</div>
+                  <div class="avatar w-7 h-7 text-xs" style="background:#14532d;color:white;" title="Mike Kim">MK</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Key Topics -->
+          <div class="lcard p-5 mb-4">
+            <div class="text-gray-800 font-semibold text-sm mb-3">🗂 Key Topics to Cover</div>
+            <div class="space-y-2">
+              <div class="flex items-center gap-3">
+                <div class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold" style="background:#ede9ff;color:#7c3aed;">1</div>
+                <div class="text-sm text-gray-700">Review design mockups</div>
+                <span class="ml-auto tag">Covered insight</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold" style="background:#ede9ff;color:#7c3aed;">2</div>
+                <div class="text-sm text-gray-700">Finalise colour palette</div>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold" style="background:#ede9ff;color:#7c3aed;">3</div>
+                <div class="text-sm text-gray-700">Discuss marketing strategy</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Score Breakdown -->
+          <div class="lcard p-5 mb-4">
+            <div class="text-gray-800 font-semibold text-sm mb-4">Score Breakdown</div>
+            <div class="grid grid-cols-4 gap-3 text-center">
+              <div>
+                <div class="text-2xl font-bold text-purple-600">5</div>
+                <div class="text-gray-400 text-xs">/20</div>
+                <div class="progress-bar mt-2"><div class="progress-fill" style="width:25%"></div></div>
+                <div class="text-gray-500 text-xs mt-1">Focus</div>
+              </div>
+              <div>
+                <div class="text-2xl font-bold text-blue-500">10</div>
+                <div class="text-gray-400 text-xs">/16</div>
+                <div class="progress-bar mt-2"><div class="progress-fill" style="width:62%;background:linear-gradient(90deg,#2563eb,#60a5fa)"></div></div>
+                <div class="text-gray-500 text-xs mt-1">Collaboration</div>
+              </div>
+              <div>
+                <div class="text-2xl font-bold text-green-600">15</div>
+                <div class="text-gray-400 text-xs">/20</div>
+                <div class="progress-bar mt-2"><div class="progress-fill" style="width:75%;background:linear-gradient(90deg,#059669,#34d399)"></div></div>
+                <div class="text-gray-500 text-xs mt-1">Time</div>
+              </div>
+              <div>
+                <div class="text-2xl font-bold text-yellow-600">12</div>
+                <div class="text-gray-400 text-xs">/15</div>
+                <div class="progress-bar mt-2"><div class="progress-fill" style="width:80%;background:linear-gradient(90deg,#d97706,#fbbf24)"></div></div>
+                <div class="text-gray-500 text-xs mt-1">Balance</div>
+              </div>
+            </div>
+            <button class="text-xs text-violet-600 hover:underline mt-4 block">View full score breakdown →</button>
+          </div>
+
+          <!-- Navigation -->
+          <div class="flex gap-3">
+            <button class="btn-secondary" onclick="showScreen('new-meeting')">← Back</button>
+            <button class="btn-primary ml-auto" onclick="showScreen('recommendations')">Get Recommendations →</button>
+          </div>
+        </div>
+
+        <!-- Right Sidebar -->
+        <div class="w-64 flex-shrink-0 space-y-4">
+          <!-- Live Value Score -->
+          <div class="lcard p-5 text-center">
+            <div class="text-gray-800 text-sm font-semibold mb-1">Live Value Score</div>
+            <div class="text-gray-400 text-xs mb-4">Medium</div>
+
+            <!-- Ring -->
+            <div class="score-ring mx-auto" style="width:100px;height:100px;">
+              <svg width="100" height="100" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="40" fill="none" stroke="#e8eaf2" stroke-width="10"/>
+                <circle cx="50" cy="50" r="40" fill="none" stroke="#f59e0b" stroke-width="10"
+                  stroke-dasharray="251" stroke-dashoffset="96" stroke-linecap="round"/>
+              </svg>
+              <div class="score-label">
+                <div class="text-gray-900 text-2xl font-bold">62</div>
+                <div class="text-gray-400 text-xs">/100</div>
+              </div>
+            </div>
+
+            <button class="text-xs text-violet-600 hover:underline mt-3 block mx-auto" onclick="openScoreModal()">How is this calculated?</button>
+
+            <div class="lcard-sm p-3 mt-4 text-left">
+              <div class="text-xs text-orange-500 font-medium mb-1">Shorten this meeting</div>
+              <div class="text-xs text-gray-500">This meeting has value, but can be done faster and more focused.</div>
+            </div>
+          </div>
+
+          <!-- Top Factors -->
+          <div class="lcard p-4">
+            <div class="text-gray-800 text-sm font-semibold mb-3">Top Factors</div>
+            <div class="space-y-3">
+              <div class="flex gap-2 items-start">
+                <span class="text-green-500 text-sm mt-0.5">✓</span>
+                <div>
+                  <div class="text-xs text-gray-800 font-semibold">Good attendee fit</div>
+                  <div class="text-xs text-gray-500">Nice — you've invited people relevant to the topic.</div>
+                </div>
+              </div>
+              <div class="flex gap-2 items-start">
+                <span class="text-orange-500 text-sm mt-0.5">⚠</span>
+                <div>
+                  <div class="text-xs text-gray-800 font-semibold">Decision not urgent</div>
+                  <div class="text-xs text-gray-500">This doesn't seem like a time-sensitive decision is required.</div>
+                </div>
+              </div>
+              <div class="flex gap-2 items-start">
+                <span class="text-blue-500 text-sm mt-0.5">ℹ</span>
+                <div>
+                  <div class="text-xs text-gray-800 font-semibold">Information sharing</div>
+                  <div class="text-xs text-gray-500">This could be done async — there may be no need to meet.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- What's next -->
+          <div class="lcard p-4">
+            <div class="text-gray-800 text-sm font-semibold mb-2">What's next?</div>
+            <div class="ai-bubble">I'll recommend the best way forward on the next step.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SCREEN: RECOMMENDATIONS                                      -->
+    <!-- ============================================================ -->
+    <div id="screen-recommendations" class="screen flex-col h-full overflow-y-auto light-zone">
+      <!-- Top bar -->
+      <div class="light-topbar flex items-center justify-between px-6 py-4">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg accent-bg flex items-center justify-center text-white text-sm">✦</div>
+          <div>
+            <div class="text-gray-900 font-bold text-sm">New Meeting Analysis</div>
+            <div class="text-gray-400 text-xs">AI Meeting Assistant</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="step-item"><div class="step-circle step-done">✓</div><span class="text-gray-400 text-xs">Describe</span></div>
+          <div class="step-line step-line-done"></div>
+          <div class="step-item"><div class="step-circle step-done">✓</div><span class="text-gray-400 text-xs">Analyse</span></div>
+          <div class="step-line step-line-done"></div>
+          <div class="step-item"><div class="step-circle step-active">3</div><span class="text-gray-900 text-xs font-semibold">Recommendations</span></div>
+          <div class="step-line"></div>
+          <div class="step-item"><div class="step-circle step-pending">4</div><span class="text-gray-400 text-xs">Review</span></div>
+          <div class="step-line"></div>
+          <div class="text-gray-400 text-xs cursor-pointer hover:text-gray-600">How it works</div>
+        </div>
+      </div>
+
+      <div class="flex flex-1 p-6 gap-6 fade-in">
+        <!-- Main Content -->
+        <div class="flex-1 max-w-2xl">
+          <h2 class="text-2xl font-bold mb-1">Here's my recommendation</h2>
+          <p class="text-gray-500 text-sm mb-6">Based on the analysis, here are the best options for your meeting.</p>
+
+          <!-- Primary Recommendation -->
+          <div class="rec-option recommended mb-4">
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <span class="text-2xl">⏱</span>
+                <div>
+                  <div class="text-gray-900 font-semibold">Shorten this meeting</div>
+                  <div class="text-gray-500 text-xs mt-0.5">Recommended · 30 minutes · Confidence: High</div>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <span class="badge badge-purple">Score 82/100</span>
+                <span class="badge badge-orange">Medium Impact</span>
+              </div>
+            </div>
+
+            <div class="lcard-sm p-3 mb-3">
+              <div class="text-gray-800 text-xs font-semibold mb-2">Why this option?</div>
+              <div class="space-y-1">
+                <div class="flex gap-2 text-xs text-gray-600"><span class="text-green-500">✓</span>Better focus — less time means tighter agenda</div>
+                <div class="flex gap-2 text-xs text-gray-600"><span class="text-green-500">✓</span>Respects everyone's time and calendar</div>
+                <div class="flex gap-2 text-xs text-gray-600"><span class="text-green-500">✓</span>Async follow-ups can handle remaining items</div>
+              </div>
+            </div>
+
+            <button class="btn-primary w-full py-2 text-sm" onclick="showScreen('review')">Use this recommendation →</button>
+          </div>
+
+          <!-- Other Options -->
+          <div class="text-gray-800 font-semibold text-sm mb-3">Other options</div>
+          <div class="grid grid-cols-2 gap-4 mb-6">
+            <!-- Option 2 -->
+            <div class="rec-option">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-xl">✉</span>
+                <div class="text-gray-800 text-sm font-semibold">Send an email instead</div>
+              </div>
+              <div class="badge badge-blue mb-3">Time saved: ~60 min</div>
+              <div class="space-y-1 mb-3">
+                <div class="text-xs text-gray-500">• No scheduling needed</div>
+                <div class="text-xs text-gray-500">• Works across time zones</div>
+                <div class="text-xs text-gray-500">• Async input from everyone</div>
+              </div>
+              <button class="btn-secondary w-full py-2 text-xs">Draft this instead</button>
+            </div>
+
+            <!-- Option 3 -->
+            <div class="rec-option">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-xl">🔄</span>
+                <div class="text-gray-800 text-sm font-semibold">Make it async</div>
+              </div>
+              <div class="badge badge-green mb-3">Time saved: ~45 min</div>
+              <div class="space-y-1 mb-3">
+                <div class="text-xs text-gray-500">• Use Loom or Notion</div>
+                <div class="text-xs text-gray-500">• Collect written feedback</div>
+                <div class="text-xs text-gray-500">• Flexible for all attendees</div>
+              </div>
+              <button class="btn-secondary w-full py-2 text-xs">Choose this route</button>
+            </div>
+          </div>
+
+          <!-- Benefits Footer -->
+          <div class="lcard p-4 mb-4">
+            <div class="grid grid-cols-4 gap-3 text-center">
+              <div>
+                <div class="text-lg mb-1">⚡</div>
+                <div class="text-gray-800 text-xs font-semibold">Focused Discussion</div>
+                <div class="text-gray-400 text-xs mt-0.5">Tighter time → sharper thinking</div>
+              </div>
+              <div>
+                <div class="text-lg mb-1">🕐</div>
+                <div class="text-gray-800 text-xs font-semibold">Respect Everyone's Time</div>
+                <div class="text-gray-400 text-xs mt-0.5">30 min saves everyone's calendar</div>
+              </div>
+              <div>
+                <div class="text-lg mb-1">✅</div>
+                <div class="text-gray-800 text-xs font-semibold">Better Decisions</div>
+                <div class="text-gray-400 text-xs mt-0.5">Prep agenda = faster alignment</div>
+              </div>
+              <div>
+                <div class="text-lg mb-1">📈</div>
+                <div class="text-gray-800 text-xs font-semibold">Continuous Improvement</div>
+                <div class="text-gray-400 text-xs mt-0.5">Track how your meetings improve</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Navigation -->
+          <div class="flex gap-3">
+            <button class="btn-secondary" onclick="showScreen('analysis')">← Back</button>
+            <button class="btn-primary ml-auto" onclick="showScreen('review')">Start Review Details →</button>
+          </div>
+        </div>
+
+        <!-- Proposed Agenda Sidebar -->
+        <div class="w-64 flex-shrink-0 space-y-4">
+          <div class="lcard p-5">
+            <div class="text-gray-800 text-sm font-semibold mb-1">Proposed Agenda</div>
+            <div class="text-gray-400 text-xs mb-4">30 min · 4 attendees</div>
+
+            <div class="relative">
+              <div class="agenda-item">
+                <div class="flex flex-col items-center">
+                  <div class="agenda-dot bg-purple-500"></div>
+                  <div class="agenda-line flex-1 mt-1" style="height:36px;"></div>
+                </div>
+                <div class="pb-4">
+                  <div class="text-gray-800 text-xs font-medium">Warm-up & goals</div>
+                  <div class="text-gray-400 text-xs">5 min</div>
+                </div>
+              </div>
+              <div class="agenda-item">
+                <div class="flex flex-col items-center">
+                  <div class="agenda-dot bg-blue-500"></div>
+                  <div class="agenda-line flex-1 mt-1" style="height:36px;"></div>
+                </div>
+                <div class="pb-4">
+                  <div class="text-gray-800 text-xs font-medium">Review design mockups</div>
+                  <div class="text-gray-400 text-xs">10 min</div>
+                </div>
+              </div>
+              <div class="agenda-item">
+                <div class="flex flex-col items-center">
+                  <div class="agenda-dot bg-green-500"></div>
+                  <div class="agenda-line flex-1 mt-1" style="height:36px;"></div>
+                </div>
+                <div class="pb-4">
+                  <div class="text-gray-800 text-xs font-medium">Align & decide</div>
+                  <div class="text-gray-400 text-xs">10 min</div>
+                </div>
+              </div>
+              <div class="agenda-item">
+                <div class="flex flex-col items-center">
+                  <div class="agenda-dot bg-orange-500"></div>
+                </div>
+                <div>
+                  <div class="text-gray-800 text-xs font-medium">Next steps</div>
+                  <div class="text-gray-400 text-xs">5 min</div>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn-secondary w-full py-2 text-xs mt-4">✏ Edit agenda</button>
+          </div>
+
+          <!-- AI assistant -->
+          <div class="flex gap-2 items-end">
+            <div class="w-9 h-9 rounded-full accent-bg flex items-center justify-center text-white flex-shrink-0">✦</div>
+            <div class="ai-bubble">Smart, meeting teams. I'm here to help you make every minute count.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SCREEN: REVIEW & CONFIRM                                     -->
+    <!-- ============================================================ -->
+    <div id="screen-review" class="screen flex-col h-full light-zone" style="overflow:hidden;">
+
+      <!-- Top bar -->
+      <div class="light-topbar flex items-center justify-between px-6 py-3 flex-shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg accent-bg flex items-center justify-center text-white text-sm">✦</div>
+          <div class="text-gray-900 font-bold text-sm">New Meeting Analysis</div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="step-item"><div class="step-circle step-done" style="width:20px;height:20px;font-size:10px;">✓</div><span class="text-gray-400 text-xs">Describe</span></div>
+          <div class="step-line step-line-done" style="width:24px;"></div>
+          <div class="step-item"><div class="step-circle step-done" style="width:20px;height:20px;font-size:10px;">✓</div><span class="text-gray-400 text-xs">Analyze</span></div>
+          <div class="step-line step-line-done" style="width:24px;"></div>
+          <div class="step-item"><div class="step-circle step-done" style="width:20px;height:20px;font-size:10px;">✓</div><span class="text-gray-400 text-xs">Recommendation</span></div>
+          <div class="step-line step-line-done" style="width:24px;"></div>
+          <div class="step-item"><div class="step-circle step-active" style="width:24px;height:24px;font-size:11px;">4</div><span class="text-gray-900 text-xs font-bold">Review</span></div>
+          <div style="width:16px;height:1px;background:#d8dae8;"></div>
+          <button style="background:none;border:1px solid #d8dae8;border-radius:20px;padding:4px 12px;font-size:12px;color:#64748b;cursor:pointer;display:flex;align-items:center;gap:5px;">❓ How it works</button>
+          <button style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;line-height:1;" onclick="showScreen('recommendations')">✕</button>
+        </div>
+      </div>
+
+      <!-- Scrollable body -->
+      <div class="flex flex-1 overflow-hidden">
+        <div class="flex-1 overflow-y-auto p-6 space-y-4 fade-in">
+
+          <div>
+            <h2 class="text-2xl font-bold mb-1">Review & confirm</h2>
+            <p class="text-gray-500 text-sm">Here's your recommended plan. You can edit anything before confirming.</p>
+          </div>
+
+          <!-- Recommended Plan Card -->
+          <div class="lcard p-5">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <span class="text-gray-700 text-sm font-semibold">Recommended plan</span>
+                <span style="background:#ede9ff;color:#7c3aed;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:0.03em;">SHORTEN THIS MEETING</span>
+              </div>
+              <button class="text-xs text-violet-600 hover:underline flex items-center gap-1">✏ Edit all</button>
+            </div>
+
+            <div class="flex gap-5">
+              <!-- Left: icon + desc -->
+              <div class="flex gap-4 flex-1">
+                <div style="width:64px;height:64px;background:linear-gradient(135deg,#ede9ff,#ddd6fe);border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:28px;">📅</div>
+                <div>
+                  <div class="text-gray-900 font-bold text-base mb-1">Shorten this meeting</div>
+                  <div class="text-gray-500 text-xs mb-3">This meeting has value, but can be shorter and more focused.</div>
+                  <div class="flex gap-2 flex-wrap">
+                    <span style="background:#f0ebff;color:#7c3aed;font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;">Value Score: 62/100</span>
+                    <span style="background:#fff7ed;color:#ea580c;font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;">Medium Impact</span>
+                    <span style="background:#f0fdf4;color:#16a34a;font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;">Confidence: High</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: details -->
+              <div style="width:220px;flex-shrink:0;border-left:1px solid #e8eaf2;padding-left:20px;space-y:0;" class="space-y-3">
+                <div class="flex items-start gap-2">
+                  <span class="text-gray-400 text-sm mt-0.5">⏱</span>
+                  <div><div class="text-gray-400 text-xs">Duration</div><div class="text-gray-800 text-xs font-semibold">30 minutes</div></div>
+                  <button class="ml-auto text-xs text-violet-500 hover:underline">Edit</button>
+                </div>
+                <div class="flex items-start gap-2">
+                  <span class="text-gray-400 text-sm mt-0.5">⚡</span>
+                  <div><div class="text-gray-400 text-xs">Time saved</div><div class="text-gray-800 text-xs font-semibold">30 minutes</div></div>
+                </div>
+                <div class="flex items-start gap-2">
+                  <span class="text-gray-400 text-sm mt-0.5">📆</span>
+                  <div><div class="text-gray-400 text-xs">When</div><div class="text-gray-800 text-xs font-semibold">May 28, 2024 at 10:00 AM</div></div>
+                </div>
+                <div class="flex items-start gap-2">
+                  <span class="text-gray-400 text-sm mt-0.5">📍</span>
+                  <div><div class="text-gray-400 text-xs">Where</div><div class="text-gray-800 text-xs font-semibold">Room A</div></div>
+                </div>
+                <div class="flex items-start gap-2">
+                  <span class="text-gray-400 text-sm mt-0.5">👥</span>
+                  <div>
+                    <div class="text-gray-400 text-xs mb-1">Attendees</div>
+                    <div class="flex gap-1">
+                      <div class="avatar w-6 h-6 text-xs" style="background:#3b1f6e;color:white;">JC</div>
+                      <div class="avatar w-6 h-6 text-xs" style="background:#0e7490;color:white;">AT</div>
+                      <div class="avatar w-6 h-6 text-xs" style="background:#92400e;color:white;">SM</div>
+                      <div class="avatar w-6 h-6 text-xs" style="background:#14532d;color:white;">MK</div>
+                      <div class="avatar w-6 h-6 text-xs" style="background:#e8eaf2;color:#94a3b8;">+1</div>
+                    </div>
+                  </div>
+                  <button class="ml-auto text-xs text-violet-500 hover:underline">Edit</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Agenda + What's different row -->
+          <div class="grid grid-cols-2 gap-4">
+            <!-- Proposed Agenda -->
+            <div class="lcard p-5">
+              <div class="flex justify-between items-center mb-4">
+                <span class="text-gray-800 font-semibold text-sm">Proposed agenda <span class="text-gray-400 font-normal">(30 min)</span></span>
+                <button class="text-xs text-violet-600 hover:underline flex items-center gap-1">✏ Edit agenda</button>
+              </div>
+              <div class="space-y-0">
+                <!-- item -->
+                <div style="display:flex;gap:12px;padding-bottom:16px;">
+                  <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
+                    <div style="width:10px;height:10px;border-radius:50%;background:#7c3aed;margin-top:3px;flex-shrink:0;"></div>
+                    <div style="width:2px;flex:1;background:#e8eaf2;margin-top:3px;"></div>
+                  </div>
+                  <div style="flex:1;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                      <div>
+                        <div class="text-gray-800 text-xs font-semibold">Welcome & goal</div>
+                        <div class="text-gray-400 text-xs">Align on the objective</div>
+                      </div>
+                      <span style="background:#f0ebff;color:#7c3aed;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0;">5 min</span>
+                    </div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:12px;padding-bottom:16px;">
+                  <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
+                    <div style="width:10px;height:10px;border-radius:50%;background:#3b82f6;margin-top:3px;"></div>
+                    <div style="width:2px;flex:1;background:#e8eaf2;margin-top:3px;"></div>
+                  </div>
+                  <div style="flex:1;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                      <div>
+                        <div class="text-gray-800 text-xs font-semibold">Review latest designs</div>
+                        <div class="text-gray-400 text-xs">Walkthrough + feedback</div>
+                      </div>
+                      <span style="background:#eff6ff;color:#2563eb;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0;">10 min</span>
+                    </div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:12px;padding-bottom:16px;">
+                  <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
+                    <div style="width:10px;height:10px;border-radius:50%;background:#059669;margin-top:3px;"></div>
+                    <div style="width:2px;flex:1;background:#e8eaf2;margin-top:3px;"></div>
+                  </div>
+                  <div style="flex:1;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                      <div>
+                        <div class="text-gray-800 text-xs font-semibold">Provide feedback</div>
+                        <div class="text-gray-400 text-xs">Open discussion</div>
+                      </div>
+                      <span style="background:#dcfce7;color:#16a34a;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0;">10 min</span>
+                    </div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:12px;padding-bottom:16px;">
+                  <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
+                    <div style="width:10px;height:10px;border-radius:50%;background:#f59e0b;margin-top:3px;"></div>
+                    <div style="width:2px;flex:1;background:#e8eaf2;margin-top:3px;"></div>
+                  </div>
+                  <div style="flex:1;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                      <div>
+                        <div class="text-gray-800 text-xs font-semibold">Align & decide</div>
+                        <div class="text-gray-400 text-xs">Confirm direction</div>
+                      </div>
+                      <span style="background:#fff7ed;color:#ea580c;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0;">5 min</span>
+                    </div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:12px;">
+                  <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
+                    <div style="width:10px;height:10px;border-radius:50%;background:#94a3b8;margin-top:3px;"></div>
+                  </div>
+                  <div style="flex:1;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                      <div>
+                        <div class="text-gray-800 text-xs font-semibold">Next steps</div>
+                        <div class="text-gray-400 text-xs">Action items & owners</div>
+                      </div>
+                      <span style="background:#f1f5f9;color:#94a3b8;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0;">0 min</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right column -->
+            <div class="space-y-4">
+              <!-- What's different -->
+              <div class="lcard p-5">
+                <div class="text-gray-800 font-semibold text-sm mb-3">What's different in this plan?</div>
+                <div class="space-y-2">
+                  <div class="flex gap-2 items-start"><span style="color:#7c3aed;font-weight:bold;flex-shrink:0;">✓</span><div class="text-gray-600 text-xs">Removed unnecessary updates</div></div>
+                  <div class="flex gap-2 items-start"><span style="color:#7c3aed;font-weight:bold;flex-shrink:0;">✓</span><div class="text-gray-600 text-xs">Combined feedback and discussion</div></div>
+                  <div class="flex gap-2 items-start"><span style="color:#7c3aed;font-weight:bold;flex-shrink:0;">✓</span><div class="text-gray-600 text-xs">Focused on decision and next steps</div></div>
+                  <div class="flex gap-2 items-start"><span style="color:#7c3aed;font-weight:bold;flex-shrink:0;">✓</span><div class="text-gray-600 text-xs">Clear time boxes for each topic</div></div>
+                </div>
+              </div>
+
+              <!-- Context to share -->
+              <div class="lcard p-5">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="text-gray-800 font-semibold text-sm">Context to share before the meeting</div>
+                  <span style="background:#dcfce7;color:#16a34a;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;">Recommended</span>
+                </div>
+                <p class="text-gray-500 text-xs mb-3">Share this 24 hours before the meeting so everyone can come prepared.</p>
+                <div style="background:#f8f9fc;border:1px solid #e4e6ef;border-radius:8px;padding:10px;display:flex;align-items:center;gap:10px;">
+                  <span style="font-size:18px;">📄</span>
+                  <div style="flex:1;">
+                    <div class="text-gray-800 text-xs font-semibold">Design Review – Background & Context</div>
+                    <div class="text-gray-400 text-xs">Google Doc</div>
+                  </div>
+                  <button style="background:#ffffff;border:1px solid #d8dae8;border-radius:6px;padding:4px 10px;font-size:11px;color:#64748b;cursor:pointer;white-space:nowrap;">Copy link 🔗</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right impact sidebar -->
+        <div class="flex-shrink-0 overflow-y-auto p-4 space-y-4" style="width:260px;border-left:1px solid #e8eaf2;">
+
+          <!-- Impact summary -->
+          <div>
+            <div class="text-gray-800 font-semibold text-sm mb-3">Impact summary</div>
+            <div class="space-y-3">
+              <div style="background:#f8f9fc;border-radius:10px;padding:10px;display:flex;align-items:center;gap:10px;">
+                <div style="width:34px;height:34px;background:#fff7ed;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">⏱</div>
+                <div><div class="text-gray-900 text-xs font-bold">30 minutes</div><div class="text-gray-400 text-xs">Time saved</div></div>
+              </div>
+              <div style="background:#f8f9fc;border-radius:10px;padding:10px;display:flex;align-items:center;gap:10px;">
+                <div style="width:34px;height:34px;background:#eff6ff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">👥</div>
+                <div><div class="text-gray-900 text-xs font-bold">6 attendees</div><div class="text-gray-400 text-xs">Time saved for everyone</div></div>
+              </div>
+              <div style="background:#f8f9fc;border-radius:10px;padding:10px;display:flex;align-items:center;gap:10px;">
+                <div style="width:34px;height:34px;background:#f0fdf4;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">⚡</div>
+                <div><div class="text-gray-900 text-xs font-bold">3x more focused</div><div class="text-gray-400 text-xs">More time on what matters</div></div>
+              </div>
+              <div style="background:#f8f9fc;border-radius:10px;padding:10px;display:flex;align-items:center;gap:10px;">
+                <div style="width:34px;height:34px;background:#fdf2f8;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🎯</div>
+                <div><div class="text-gray-900 text-xs font-bold">Better outcomes</div><div class="text-gray-400 text-xs">Clear decisions & next steps</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Before / After table -->
+          <div class="lcard p-4">
+            <div style="display:grid;grid-template-columns:1fr auto auto auto;gap:4px;font-size:11px;align-items:center;">
+              <div></div>
+              <div class="text-gray-400 font-medium text-center">Before</div>
+              <div></div>
+              <div style="color:#7c3aed;font-weight:700;text-center;">After</div>
+
+              <div class="text-gray-500">Duration</div>
+              <div class="text-gray-700 font-medium text-center">60 min</div>
+              <div style="color:#7c3aed;font-size:14px;text-align:center;">→</div>
+              <div style="color:#7c3aed;font-weight:700;">30 min</div>
+
+              <div class="text-gray-500">Focus time</div>
+              <div class="text-gray-700 font-medium text-center">40%</div>
+              <div style="color:#7c3aed;font-size:14px;text-align:center;">→</div>
+              <div style="color:#7c3aed;font-weight:700;">80%</div>
+
+              <div class="text-gray-500">Decision clarity</div>
+              <div class="text-gray-700 font-medium text-center">Medium</div>
+              <div style="color:#7c3aed;font-size:14px;text-align:center;">→</div>
+              <div style="color:#7c3aed;font-weight:700;">High</div>
+            </div>
+          </div>
+
+          <!-- Pro tip -->
+          <div style="background:linear-gradient(135deg,#f5f0ff,#ede9ff);border:1px solid #ddd6fe;border-radius:10px;padding:14px;">
+            <div class="flex items-center gap-2 mb-2">
+              <span style="color:#7c3aed;font-size:14px;">✦</span>
+              <div style="color:#7c3aed;font-weight:700;font-size:12px;">Pro tip</div>
+            </div>
+            <div class="text-gray-600 text-xs leading-relaxed">Shorter, focused meetings drive better participation and faster decisions.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom action bar -->
+      <div class="light-topbar flex items-center justify-between px-6 py-3 flex-shrink-0" style="border-top:1px solid #e4e6ef;border-bottom:none;">
+        <button class="btn-secondary flex items-center gap-2" onclick="showScreen('recommendations')">← Back</button>
+        <div class="flex items-center gap-3">
+          <button style="background:#ffffff;border:1px solid #d8dae8;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:500;color:#64748b;cursor:pointer;display:flex;align-items:center;gap:6px;">🔖 Save for later</button>
+          <button style="background:#0f172a;color:#ffffff;border:none;border-radius:8px;padding:10px 22px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;" onclick="showScreen('dashboard')">📅 Confirm & Create Meeting →</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+
+  <!-- ============================================================ -->
+  <!-- MODAL: HOW IS THE SCORE CALCULATED?                        -->
+  <!-- ============================================================ -->
+  <div id="score-modal" onclick="closeScoreModal(event)" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center;">
+    <div id="score-modal-box" style="background:#141728;border:1px solid #252b47;border-radius:16px;width:560px;max-height:85vh;overflow-y:auto;padding:28px;position:relative;" onclick="event.stopPropagation()">
+
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <div class="text-white text-xl font-bold">How is the Value Score calculated?</div>
+          <div class="text-gray-400 text-sm mt-0.5">A transparent breakdown of what goes into your score</div>
+        </div>
+        <button onclick="closeScoreModal()" style="background:#1e2240;border:none;color:#94a3b8;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;">✕</button>
+      </div>
+
+      <!-- Score overview -->
+      <div style="background:#1a1f35;border:1px solid #252b47;border-radius:12px;padding:18px;margin-bottom:20px;display:flex;align-items:center;gap:20px;">
+        <div class="score-ring" style="width:80px;height:80px;flex-shrink:0;">
+          <svg width="80" height="80" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="40" fill="none" stroke="#1e2240" stroke-width="10"/>
+            <circle cx="50" cy="50" r="40" fill="none" stroke="#f59e0b" stroke-width="10"
+              stroke-dasharray="251" stroke-dashoffset="96" stroke-linecap="round"/>
+          </svg>
+          <div class="score-label">
+            <div class="text-white font-bold" style="font-size:18px;">62</div>
+            <div class="text-gray-500" style="font-size:10px;">/100</div>
+          </div>
+        </div>
+        <div>
+          <div class="text-white font-semibold mb-1">Your current score: <span style="color:#f59e0b;">62 / 100 — Medium</span></div>
+          <div class="text-gray-400 text-sm">The Value Score measures how much this meeting justifies the time it takes. It's made up of four equally weighted dimensions, each scored and combined into a single number.</div>
+        </div>
+      </div>
+
+      <!-- Dimensions -->
+      <div class="text-white font-semibold text-sm mb-3">The four dimensions</div>
+      <div style="display:grid;gap:12px;margin-bottom:20px;">
+
+        <!-- Focus -->
+        <div style="background:#1a1f35;border:1px solid #252b47;border-radius:10px;padding:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:18px;">🎯</span>
+              <div class="text-white font-medium text-sm">Focus</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="height:6px;width:80px;background:#1e2240;border-radius:3px;overflow:hidden;">
+                <div style="width:25%;height:100%;background:linear-gradient(90deg,#7c3aed,#a78bfa);border-radius:3px;"></div>
+              </div>
+              <span class="text-white font-bold text-sm">5<span class="text-gray-500 font-normal">/20</span></span>
+            </div>
+          </div>
+          <div class="text-gray-400 text-xs">Measures how clear and specific your meeting goal is. Vague or broad topics score lower — a tightly scoped agenda with a single decision point scores highest.</div>
+          <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;">
+            <span class="tag" style="font-size:11px;">Agenda clarity</span>
+            <span class="tag" style="font-size:11px;">Single vs. multi-topic</span>
+            <span class="tag" style="font-size:11px;">Defined outcome</span>
+          </div>
+        </div>
+
+        <!-- Collaboration -->
+        <div style="background:#1a1f35;border:1px solid #252b47;border-radius:10px;padding:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:18px;">🤝</span>
+              <div class="text-white font-medium text-sm">Collaboration</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="height:6px;width:80px;background:#1e2240;border-radius:3px;overflow:hidden;">
+                <div style="width:62%;height:100%;background:linear-gradient(90deg,#2563eb,#60a5fa);border-radius:3px;"></div>
+              </div>
+              <span class="text-white font-bold text-sm">10<span class="text-gray-500 font-normal">/16</span></span>
+            </div>
+          </div>
+          <div class="text-gray-400 text-xs">Evaluates whether the right people are in the room. Too many attendees dilute focus; too few means key decisions can't be made. Scores highest when attendance is purposeful.</div>
+          <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;">
+            <span class="tag" style="font-size:11px;">Attendee relevance</span>
+            <span class="tag" style="font-size:11px;">Decision authority</span>
+            <span class="tag" style="font-size:11px;">Group size</span>
+          </div>
+        </div>
+
+        <!-- Time -->
+        <div style="background:#1a1f35;border:1px solid #252b47;border-radius:10px;padding:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:18px;">⏱</span>
+              <div class="text-white font-medium text-sm">Time</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="height:6px;width:80px;background:#1e2240;border-radius:3px;overflow:hidden;">
+                <div style="width:75%;height:100%;background:linear-gradient(90deg,#059669,#34d399);border-radius:3px;"></div>
+              </div>
+              <span class="text-white font-bold text-sm">15<span class="text-gray-500 font-normal">/20</span></span>
+            </div>
+          </div>
+          <div class="text-gray-400 text-xs">Compares the meeting duration against the complexity of the goal. A 60-minute meeting for a simple status update scores low; a 30-minute focused decision session scores high.</div>
+          <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;">
+            <span class="tag" style="font-size:11px;">Duration vs. goal complexity</span>
+            <span class="tag" style="font-size:11px;">Calendar cost</span>
+          </div>
+        </div>
+
+        <!-- Balance -->
+        <div style="background:#1a1f35;border:1px solid #252b47;border-radius:10px;padding:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:18px;">⚖️</span>
+              <div class="text-white font-medium text-sm">Balance</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="height:6px;width:80px;background:#1e2240;border-radius:3px;overflow:hidden;">
+                <div style="width:80%;height:100%;background:linear-gradient(90deg,#d97706,#fbbf24);border-radius:3px;"></div>
+              </div>
+              <span class="text-white font-bold text-sm">12<span class="text-gray-500 font-normal">/15</span></span>
+            </div>
+          </div>
+          <div class="text-gray-400 text-xs">Considers whether this meeting could be replaced by a lighter-weight alternative — an email, async document, or quick Slack thread. Higher scores mean a meeting is genuinely the best format.</div>
+          <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;">
+            <span class="tag" style="font-size:11px;">Async suitability</span>
+            <span class="tag" style="font-size:11px;">Urgency</span>
+            <span class="tag" style="font-size:11px;">Format fit</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Score bands -->
+      <div class="text-white font-semibold text-sm mb-3">Score bands</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;">
+        <div style="background:#1a1f35;border:1px solid #252b47;border-radius:8px;padding:12px;text-align:center;">
+          <div style="font-size:11px;font-weight:700;color:#34d399;margin-bottom:4px;">HIGH</div>
+          <div class="text-white font-bold">80–100</div>
+          <div class="text-gray-500" style="font-size:11px;margin-top:4px;">Meeting is the right format. Run it as planned.</div>
+        </div>
+        <div style="background:#1e2838;border:1px solid #2d3a4a;border-radius:8px;padding:12px;text-align:center;">
+          <div style="font-size:11px;font-weight:700;color:#60a5fa;margin-bottom:4px;">MEDIUM-HIGH</div>
+          <div class="text-white font-bold">60–79</div>
+          <div class="text-gray-500" style="font-size:11px;margin-top:4px;">Worth having — minor tweaks recommended.</div>
+        </div>
+        <div style="background:#2a1f10;border:1px solid #3d2f18;border-radius:8px;padding:12px;text-align:center;">
+          <div style="font-size:11px;font-weight:700;color:#fbbf24;margin-bottom:4px;">MEDIUM</div>
+          <div class="text-white font-bold">40–59</div>
+          <div class="text-gray-500" style="font-size:11px;margin-top:4px;">Consider shortening or going async.</div>
+        </div>
+        <div style="background:#1f1212;border:1px solid #3d1f1f;border-radius:8px;padding:12px;text-align:center;">
+          <div style="font-size:11px;font-weight:700;color:#f87171;margin-bottom:4px;">LOW</div>
+          <div class="text-white font-bold">0–39</div>
+          <div class="text-gray-500" style="font-size:11px;margin-top:4px;">This meeting may not be needed at all.</div>
+        </div>
+      </div>
+
+      <!-- Footer note -->
+      <div style="background:rgba(109,40,217,0.1);border:1px solid rgba(109,40,217,0.3);border-radius:10px;padding:14px;display:flex;gap:10px;align-items:start;">
+        <span style="font-size:18px;flex-shrink:0;">✦</span>
+        <div class="text-gray-300 text-xs">The score is recalculated in real time as you update meeting details. Improving your agenda clarity or reducing duration will raise your score before you even schedule anything.</div>
+      </div>
+
+      <button class="btn-primary w-full mt-5" onclick="closeScoreModal()">Got it</button>
+    </div>
+  </div>
+
+  <script>
+    let selectedGoal = null;
+
+    function showScreen(name) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById('screen-' + name).classList.add('active');
+
+      // Update sidebar active state
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      if (name === 'dashboard') {
+        document.getElementById('nav-dashboard').classList.add('active');
+      } else {
+        document.getElementById('nav-new').classList.add('active');
+      }
+
+      // Show "Great call!" card only on review screen
+      const card = document.getElementById('great-call-card');
+      card.style.display = name === 'review' ? 'block' : 'none';
+    }
+
+    function selectGoal(btn, goal) {
+      document.querySelectorAll('.goal-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedGoal = goal;
+    }
+
+    function runAnalysis() {
+      const about = document.getElementById('meeting-about').value.trim();
+      const topic = about || 'Review design mockups and collect team feedback';
+      document.getElementById('summary-topic').textContent = topic;
+
+      const goalLabels = {
+        decision: 'Make a decision',
+        problem: 'Solve a problem',
+        share: 'Share information',
+        brainstorm: 'Brainstorm ideas',
+        other: 'General discussion'
+      };
+      document.getElementById('summary-goal').textContent =
+        selectedGoal ? goalLabels[selectedGoal] : 'Gather feedback and align on final direction';
+
+      // Fake loading animation
+      const btn = event.target;
+      btn.textContent = 'Analysing...';
+      btn.disabled = true;
+      setTimeout(() => {
+        btn.textContent = 'Analyse Meeting →';
+        btn.disabled = false;
+        showScreen('analysis');
+      }, 1200);
+    }
+
+    function openScoreModal() {
+      const modal = document.getElementById('score-modal');
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeScoreModal(event) {
+      if (event && event.target !== document.getElementById('score-modal')) return;
+      document.getElementById('score-modal').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        document.getElementById('score-modal').style.display = 'none';
+        document.body.style.overflow = '';
+      }
+    });
+  </script>
+</body>
+</html>
